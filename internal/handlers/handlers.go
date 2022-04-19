@@ -37,6 +37,6 @@ func GetUrl(db *storage.Db) echo.HandlerFunc {
 		}
 		c.Response().Header().Set("Location", db.ShortUrl[shortUrl])
 
-		return c.NoContent(307)
+		return c.NoContent(http.StatusTemporaryRedirect)
 	}
 }
