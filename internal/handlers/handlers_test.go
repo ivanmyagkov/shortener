@@ -18,25 +18,25 @@ func TestGetUrl(t *testing.T) {
 	}
 	tests := []struct {
 		name  string
-		db    *storage.Db
+		db    *storage.DB
 		value string
 		want  want
 	}{
 		{
 			name:  "without param",
-			db:    &storage.Db{ShortUrl: map[string]string{"http://localhost:8080/f845599b09851789": "https://www.yandex.ru"}},
+			db:    &storage.DB{ShortURL: map[string]string{"http://localhost:8080/f845599b09851789": "https://www.yandex.ru"}},
 			value: "",
 			want:  want{code: 400},
 		},
 		{
 			name:  "with empty bd",
-			db:    &storage.Db{ShortUrl: map[string]string{}},
+			db:    &storage.DB{ShortURL: map[string]string{}},
 			value: "f845599b09851789",
 			want:  want{code: 400},
 		},
 		{
 			name:  "with param",
-			db:    &storage.Db{ShortUrl: map[string]string{"http://localhost:8080/f845599b09851789": "https://www.yandex.ru"}},
+			db:    &storage.DB{ShortURL: map[string]string{"http://localhost:8080/f845599b09851789": "https://www.yandex.ru"}},
 			value: "f845599b09851789",
 			want:  want{code: 307},
 		},
@@ -52,7 +52,7 @@ func TestGetUrl(t *testing.T) {
 			c.SetParamNames("id")
 			c.SetParamValues(tt.value)
 
-			h := GetUrl(tt.db)
+			h := GetURL(tt.db)
 			if assert.NoError(t, h(c)) {
 				require.Equal(t, tt.want.code, rec.Code)
 			}
@@ -67,20 +67,20 @@ func TestPostUrl(t *testing.T) {
 	}
 	tests := []struct {
 		name  string
-		db    *storage.Db
+		db    *storage.DB
 		value string
 		want  want
 	}{
 		{
 			name:  "body is empty",
 			value: "",
-			db:    storage.NewDbConn(),
+			db:    storage.NewDBConn(),
 			want:  want{code: 400, body: ""},
 		},
 		{
 			name:  "with body",
 			value: "https://www.yandex.ru",
-			db:    storage.NewDbConn(),
+			db:    storage.NewDBConn(),
 			want:  want{code: 201, body: "http://localhost:8080/f845599b09851789"},
 		},
 	}
@@ -90,7 +90,7 @@ func TestPostUrl(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			h := PostUrl(tt.db)
+			h := PostURL(tt.db)
 			if assert.NoError(t, h(c)) {
 				require.Equal(t, tt.want.code, rec.Code)
 				body, err := io.ReadAll(rec.Body)

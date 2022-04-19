@@ -1,12 +1,12 @@
 package storage
 
-type Db struct {
-	ShortUrl map[string]string
+type DB struct {
+	ShortURL map[string]string
 }
 
-func NewDbConn() *Db {
-	return &Db{
-		ShortUrl: make(map[string]string),
+func NewDBConn() *DB {
+	return &DB{
+		ShortURL: make(map[string]string),
 	}
 
 }

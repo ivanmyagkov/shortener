@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	db := storage.NewDbConn()
+	db := storage.NewDBConn()
 	e := echo.New()
-	e.GET("/:id", handlers.GetUrl(db))
-	e.POST("/", handlers.PostUrl(db))
+	e.GET("/:id", handlers.GetURL(db))
+	e.POST("/", handlers.PostURL(db))
 	e.Logger.Fatal(e.Start(":8080"))
 
 }

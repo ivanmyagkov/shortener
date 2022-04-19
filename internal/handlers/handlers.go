@@ -10,32 +10,32 @@ import (
 
 const host = "http://localhost:8080/"
 
-func PostUrl(url *storage.Db) echo.HandlerFunc {
+func PostURL(db *storage.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		body, err := io.ReadAll(c.Request().Body)
 		if err != nil || len(body) == 0 {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		shortUrl := host + utils.MD5(body)
+		shortURL := host + utils.MD5(body)
 
-		url.ShortUrl[shortUrl] = string(body)
+		db.ShortURL[shortURL] = string(body)
 
-		return c.String(http.StatusCreated, shortUrl)
+		return c.String(http.StatusCreated, shortURL)
 	}
 }
 
-func GetUrl(db *storage.Db) echo.HandlerFunc {
+func GetURL(db *storage.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		if c.Param("id") == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		shortUrl := host + c.Param("id")
+		shortURL := host + c.Param("id")
 
-		if db.ShortUrl[shortUrl] == "" {
+		if db.ShortURL[shortURL] == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		c.Response().Header().Set("Location", db.ShortUrl[shortUrl])
+		c.Response().Header().Set("Location", db.ShortURL[shortURL])
 
 		return c.NoContent(http.StatusTemporaryRedirect)
 	}
