@@ -10,15 +10,15 @@ import (
 	"net/http"
 )
 
-const host = "http://localhost:8080/"
-
 type Server struct {
 	storage interfaces.Storage
+	cfg     interfaces.Config
 }
 
-func New(storage interfaces.Storage) *Server {
+func New(storage interfaces.Storage, config interfaces.Config) *Server {
 	return &Server{
 		storage: storage,
+		cfg:     config,
 	}
 }
 
@@ -28,7 +28,7 @@ func PostURL(s *Server) echo.HandlerFunc {
 		if err != nil || len(body) == 0 {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		shortURL := host + utils.MD5(body)
+		shortURL := s.cfg.HostName() + "/" + utils.MD5(body)
 		s.storage.SetShortURL(shortURL, string(body))
 
 		//db.ShortURL[shortURL] = string(body)
@@ -43,7 +43,7 @@ func GetURL(s *Server) echo.HandlerFunc {
 		if c.Param("id") == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		shortURL := host + c.Param("id")
+		shortURL := s.cfg.HostName() + "/" + c.Param("id")
 
 		if s.storage.GetURL(shortURL) == "" {
 			return c.NoContent(http.StatusBadRequest)
@@ -78,7 +78,7 @@ func PostJSON(s *Server) echo.HandlerFunc {
 			return c.NoContent(http.StatusBadRequest)
 		}
 
-		response.ShortURL = host + utils.MD5([]byte(request.URL))
+		response.ShortURL = s.cfg.HostName() + "/" + utils.MD5([]byte(request.URL))
 		s.storage.SetShortURL(response.ShortURL, request.URL)
 
 		return c.JSON(http.StatusCreated, response)
