@@ -29,7 +29,7 @@ func PostURL(s *Server) echo.HandlerFunc {
 			return c.NoContent(http.StatusBadRequest)
 		}
 		shortURL := host + utils.MD5(body)
-		s.storage.SetShortUrl(shortURL, string(body))
+		s.storage.SetShortURL(shortURL, string(body))
 
 		//db.ShortURL[shortURL] = string(body)
 
@@ -45,10 +45,10 @@ func GetURL(s *Server) echo.HandlerFunc {
 		}
 		shortURL := host + c.Param("id")
 
-		if s.storage.GetUrl(shortURL) == "" {
+		if s.storage.GetURL(shortURL) == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		c.Response().Header().Set("Location", s.storage.GetUrl(shortURL))
+		c.Response().Header().Set("Location", s.storage.GetURL(shortURL))
 
 		return c.NoContent(http.StatusTemporaryRedirect)
 	}
@@ -57,7 +57,7 @@ func GetURL(s *Server) echo.HandlerFunc {
 func PostJSON(s *Server) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var request struct {
-			Url string `json:"url"`
+			URL string `json:"url"`
 		}
 
 		var response struct {
@@ -74,12 +74,12 @@ func PostJSON(s *Server) echo.HandlerFunc {
 			return c.NoContent(http.StatusBadRequest)
 		}
 
-		if request.Url == "" {
+		if request.URL == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
 
-		response.ShortURL = host + utils.MD5([]byte(request.Url))
-		s.storage.SetShortUrl(response.ShortURL, request.Url)
+		response.ShortURL = host + utils.MD5([]byte(request.URL))
+		s.storage.SetShortURL(response.ShortURL, request.URL)
 
 		return c.JSON(http.StatusCreated, response)
 

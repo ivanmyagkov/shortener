@@ -10,10 +10,10 @@ func NewDBConn() *DB {
 	}
 }
 
-func (db *DB) GetUrl(shortUrl string) string {
+func (db *DB) GetURL(shortUrl string) string {
 	return db.ShortURL[shortUrl]
 }
 
-func (db *DB) SetShortUrl(shortUrl string, url string) {
+func (db *DB) SetShortURL(shortUrl string, url string) {
 	db.ShortURL[shortUrl] = url
 }

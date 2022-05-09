@@ -61,7 +61,7 @@ func TestGetUrl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
 			s := New(tt.args.db)
-			s.storage.SetShortUrl(tt.args.shortUrl, tt.args.url)
+			s.storage.SetShortURL(tt.args.shortUrl, tt.args.url)
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -185,6 +185,9 @@ func TestPostJSON(t *testing.T) {
 			if assert.NoError(t, h(c)) {
 				require.Equal(t, tt.want.code, rec.Code)
 				body, err := io.ReadAll(rec.Body)
+				if err != nil {
+					require.Errorf(t, err, "can't read body")
+				}
 				err = json.Unmarshal(body, &response)
 
 				if err != nil {

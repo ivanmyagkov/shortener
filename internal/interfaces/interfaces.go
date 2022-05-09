@@ -1,6 +1,6 @@
 package interfaces
 
 type Storage interface {
-	GetUrl(string) string
-	SetShortUrl(string, string)
+	GetURL(string) string
+	SetShortURL(string, string)
 }
