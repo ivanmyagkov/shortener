@@ -8,5 +8,12 @@ func NewDBConn() *DB {
 	return &DB{
 		ShortURL: make(map[string]string),
 	}
+}
 
+func (db *DB) GetUrl(shortUrl string) string {
+	return db.ShortURL[shortUrl]
+}
+
+func (db *DB) SetShortUrl(shortUrl string, url string) {
+	db.ShortURL[shortUrl] = url
 }

@@ -8,9 +8,11 @@ import (
 
 func main() {
 	db := storage.NewDBConn()
+	srv := handlers.New(db)
 	e := echo.New()
-	e.GET("/:id", handlers.GetURL(db))
-	e.POST("/", handlers.PostURL(db))
+	e.GET("/:id", handlers.GetURL(srv))
+	e.POST("/", handlers.PostURL(srv))
+	e.POST("/api/shorten", handlers.PostJSON(srv))
 	e.Logger.Fatal(e.Start(":8080"))
 
 }
