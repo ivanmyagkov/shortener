@@ -16,8 +16,8 @@ import (
 func TestGetUrl(t *testing.T) {
 	type args struct {
 		db       *storage.DB
-		url      string
-		shortUrl string
+		URL      string
+		shortURL string
 	}
 	type want struct {
 		code int
@@ -32,8 +32,8 @@ func TestGetUrl(t *testing.T) {
 			name: "without param",
 			args: args{
 				db:       storage.NewDBConn(),
-				url:      "https://www.yandex.ru",
-				shortUrl: "http://localhost:8080/f845599b09851789",
+				URL:      "https://www.yandex.ru",
+				shortURL: "http://localhost:8080/f845599b09851789",
 			},
 			value: "",
 			want:  want{code: 400},
@@ -50,8 +50,8 @@ func TestGetUrl(t *testing.T) {
 			name: "with param",
 			args: args{
 				db:       storage.NewDBConn(),
-				url:      "https://www.yandex.ru",
-				shortUrl: "http://localhost:8080/f845599b09851789",
+				URL:      "https://www.yandex.ru",
+				shortURL: "http://localhost:8080/f845599b09851789",
 			},
 			value: "f845599b09851789",
 			want:  want{code: 307},
@@ -61,7 +61,7 @@ func TestGetUrl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
 			s := New(tt.args.db)
-			s.storage.SetShortURL(tt.args.shortUrl, tt.args.url)
+			s.storage.SetShortURL(tt.args.shortURL, tt.args.URL)
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
