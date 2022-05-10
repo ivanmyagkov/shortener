@@ -34,7 +34,7 @@ func TestGetUrl(t *testing.T) {
 			name: "without param",
 			args: args{
 				db:       storage.NewDBConn(),
-				cfg:      config.NewConfig(":8080", "http://localhost:8080/"),
+				cfg:      config.NewConfig(":8080", "http://localhost:8080/", ""),
 				URL:      "https://www.yandex.ru",
 				shortURL: "http://localhost:8080/f845599b09851789",
 			},
@@ -45,7 +45,7 @@ func TestGetUrl(t *testing.T) {
 			name: "with empty bd",
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080/"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080/", ""),
 			},
 			value: "f845599b09851789",
 			want:  want{code: 400},
@@ -54,7 +54,7 @@ func TestGetUrl(t *testing.T) {
 			name: "with param",
 			args: args{
 				db:       storage.NewDBConn(),
-				cfg:      config.NewConfig(":8080", "http://localhost:8080"),
+				cfg:      config.NewConfig(":8080", "http://localhost:8080", ""),
 				URL:      "https://www.yandex.ru",
 				shortURL: "http://localhost:8080/f845599b09851789",
 			},
@@ -103,7 +103,7 @@ func TestPostUrl(t *testing.T) {
 			value: "",
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),
 			},
 			want: want{code: 400, body: ""},
 		},
@@ -112,7 +112,7 @@ func TestPostUrl(t *testing.T) {
 			value: "https://www.yandex.ru",
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),
 			},
 			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
 		},
@@ -158,7 +158,7 @@ func TestPostJSON(t *testing.T) {
 			value: "",
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),
 			},
 			want: want{code: 400, body: ""},
 		},
@@ -167,7 +167,7 @@ func TestPostJSON(t *testing.T) {
 			value: `{"url": ""}`,
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),
 			},
 			want: want{code: 400, body: ""},
 		},
@@ -176,7 +176,7 @@ func TestPostJSON(t *testing.T) {
 			value: `{"url": "https://www.yandex.ru"}`,
 			args: args{
 				db:  storage.NewDBConn(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080"),
+				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),
 			},
 			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
 		},
