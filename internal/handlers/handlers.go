@@ -45,11 +45,11 @@ func GetURL(s *Server) echo.HandlerFunc {
 		}
 		shortURL := s.cfg.HostName() + "/" + c.Param("id")
 
-		if s.storage.GetURL(shortURL) == "" {
+		su, _ := s.storage.GetURL(shortURL)
+		if su == "" {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		c.Response().Header().Set("Location", s.storage.GetURL(shortURL))
-
+		c.Response().Header().Set("Location", su)
 		return c.NoContent(http.StatusTemporaryRedirect)
 	}
 }

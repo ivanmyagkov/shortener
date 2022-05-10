@@ -1,8 +1,16 @@
 package interfaces
 
+import "errors"
+
+var (
+	ErrNotFound      = errors.New("not found")
+	ErrAlreadyExists = errors.New("already exists")
+)
+
 type Storage interface {
-	GetURL(string) string
-	SetShortURL(string, string)
+	GetURL(string) (string, error)
+	SetShortURL(string, string) error
+	Close() error
 }
 
 type Config interface {
