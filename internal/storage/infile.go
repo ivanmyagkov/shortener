@@ -24,7 +24,6 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 
 	if stat, _ := file.Stat(); stat.Size() != 0 {
 		scanner := bufio.NewScanner(file)
-		// optionally, resize scanner's capacity for lines over 64K, see next example
 		for scanner.Scan() {
 			fmt.Println(scanner.Text())
 			err := json.Unmarshal(scanner.Bytes(), &data)
