@@ -17,7 +17,7 @@ func main() {
 		log.Fatal(err)
 	}
 	var db interfaces.Storage
-	cfg := config.NewConfig(envVar.ServerAddress, envVar.BaseURL, "")
+	cfg := config.NewConfig(envVar.ServerAddress, envVar.BaseURL, "url.log")
 	if cfg.FilePath() != "" {
 		db, err = storage.NewInFile(cfg.FilePath())
 		if err != nil {
