@@ -40,9 +40,8 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 	}, nil
 }
 
-func (s *InFile) Close() error {
+func (s *InFile) Close() {
 	s.cache = nil
-	return s.file.Close()
 }
 
 func (s *InFile) GetURL(key string) (string, error) {

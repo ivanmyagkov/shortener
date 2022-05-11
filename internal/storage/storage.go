@@ -27,7 +27,7 @@ func (db *DB) SetShortURL(shortURL string, URL string) error {
 	return nil
 
 }
-func (db *DB) Close() error {
+func (db *DB) Close() {
 	db.ShortURL = nil
-	return nil
+
 }

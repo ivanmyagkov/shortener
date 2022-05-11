@@ -10,7 +10,7 @@ var (
 type Storage interface {
 	GetURL(string) (string, error)
 	SetShortURL(string, string) error
-	Close() error
+	Close()
 }
 
 type Config interface {
