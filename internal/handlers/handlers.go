@@ -27,6 +27,9 @@ func New(storage interfaces.Storage, config interfaces.Config) *Server {
 
 func (s Server) PostURL(c echo.Context) error {
 	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
 	_, err = url.ParseRequestURI(string(body))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
