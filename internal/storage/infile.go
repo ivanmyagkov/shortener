@@ -3,10 +3,9 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
-	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
-	"log"
 	"os"
+
+	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 )
 
 type InFile struct {
@@ -25,10 +24,9 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 	if stat, _ := file.Stat(); stat.Size() != 0 {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			fmt.Println(scanner.Text())
 			err := json.Unmarshal(scanner.Bytes(), &data)
 			if err != nil {
-				log.Fatal("DB file is damaged.")
+				return nil, err
 			}
 		}
 	}

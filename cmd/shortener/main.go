@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
+	"log"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/ivanmyagkov/shortener.git/internal/config"
 	"github.com/ivanmyagkov/shortener.git/internal/handlers"
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
+	"github.com/ivanmyagkov/shortener.git/internal/middleware"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"log"
 )
 
 var flags struct {
@@ -31,14 +32,14 @@ func init() {
 	}
 	flag.StringVar(&flags.a, "a", envVar.ServerAddress, "server address")
 	flag.StringVar(&flags.b, "b", envVar.BaseURL, "base url")
-	flag.StringVar(&flags.f, "f", envVar.FileStoragePath, "file storage path")
+	flag.StringVar(&flags.f, "f", "test.log", "file storage path")
+	flag.Parse()
 }
 
 func main() {
 	var db interfaces.Storage
 	var err error
 
-	flag.Parse()
 	cfg := config.NewConfig(flags.a, flags.b, flags.f)
 
 	if cfg.FilePath() != "" {
@@ -54,12 +55,12 @@ func main() {
 	srv := handlers.New(db, cfg)
 
 	e := echo.New()
-	e.Use(middleware.Gzip())
-	e.Use(middleware.Decompress())
+	e.Use(middleware.CompressHandle)
+	e.Use(middleware.Decompress)
 
-	e.GET("/:id", handlers.GetURL(srv))
-	e.POST("/", handlers.PostURL(srv))
-	e.POST("/api/shorten", handlers.PostJSON(srv))
+	e.GET("/:id", srv.GetURL)
+	e.POST("/", srv.PostURL)
+	e.POST("/api/shorten", srv.PostJSON)
 
 	if err := e.Start(cfg.SrvAddr()); err != nil {
 		e.Logger.Fatal(err)

@@ -2,16 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	"github.com/ivanmyagkov/shortener.git/internal/config"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestGetUrl(t *testing.T) {
@@ -56,7 +58,7 @@ func TestGetUrl(t *testing.T) {
 				db:       storage.NewDBConn(),
 				cfg:      config.NewConfig(":8080", "http://localhost:8080", ""),
 				URL:      "https://www.yandex.ru",
-				shortURL: "http://localhost:8080/f845599b09851789",
+				shortURL: "f845599b09851789",
 			},
 			value: "f845599b09851789",
 			want:  want{code: 307},
@@ -66,7 +68,10 @@ func TestGetUrl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
 			s := New(tt.args.db, tt.args.cfg)
-			s.storage.SetShortURL(tt.args.shortURL, tt.args.URL)
+			err := s.storage.SetShortURL(tt.args.shortURL, tt.args.URL)
+			if err != nil {
+				log.Println(err)
+			}
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -75,8 +80,8 @@ func TestGetUrl(t *testing.T) {
 			c.SetParamNames("id")
 			c.SetParamValues(tt.value)
 
-			h := GetURL(s)
-			if assert.NoError(t, h(c)) {
+			h := s.GetURL(c)
+			if assert.NoError(t, h) {
 				require.Equal(t, tt.want.code, rec.Code)
 			}
 		})
@@ -124,8 +129,8 @@ func TestPostUrl(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			h := PostURL(s)
-			if assert.NoError(t, h(c)) {
+			h := s.PostURL(c)
+			if assert.NoError(t, h) {
 				require.Equal(t, tt.want.code, rec.Code)
 				body, err := io.ReadAll(rec.Body)
 				if err != nil {
@@ -193,8 +198,8 @@ func TestPostJSON(t *testing.T) {
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			c := e.NewContext(req, rec)
-			h := PostJSON(s)
-			if assert.NoError(t, h(c)) {
+			h := s.PostJSON(c)
+			if assert.NoError(t, h) {
 				require.Equal(t, tt.want.code, rec.Code)
 				body, err := io.ReadAll(rec.Body)
 				if err != nil {
@@ -205,7 +210,6 @@ func TestPostJSON(t *testing.T) {
 				if err != nil {
 					require.Errorf(t, err, "can't read body")
 				}
-
 				require.Equal(t, tt.want.body, response.ShortURL)
 			}
 		})
