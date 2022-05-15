@@ -55,8 +55,8 @@ func main() {
 	srv := handlers.New(db, cfg)
 
 	e := echo.New()
-	e.Use(middleware.CompressHandle)
-	e.Use(middleware.Decompress)
+	e.Use(middleware.CompressHandle())
+	e.Use(middleware.Decompress())
 
 	e.GET("/:id", srv.GetURL)
 	e.POST("/", srv.PostURL)
