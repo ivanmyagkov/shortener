@@ -20,6 +20,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func CompressHandle(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+
 		if !strings.Contains(c.Response().Header().Get("Accept-Encoding"), "gzip") {
 			return next(c)
 		}
@@ -30,7 +31,7 @@ func CompressHandle(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		defer gz.Close()
 		c.Response().Writer = gzipWriter{ResponseWriter: c.Response(), Writer: gz}
-		c.Response().Header().Set("Content-Encoding", "gzip")
+		c.Response().Writer.Header().Set("Content-Encoding", "gzip")
 		return next(c)
 	}
 }
