@@ -32,7 +32,7 @@ func init() {
 	}
 	flag.StringVar(&flags.a, "a", envVar.ServerAddress, "server address")
 	flag.StringVar(&flags.b, "b", envVar.BaseURL, "base url")
-	flag.StringVar(&flags.f, "f", "test.log", "file storage path")
+	flag.StringVar(&flags.f, "f", envVar.FileStoragePath, "file storage path")
 	flag.Parse()
 }
 
