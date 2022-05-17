@@ -30,17 +30,27 @@ func (s Server) PostURL(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	_, err = url.ParseRequestURI(string(body))
+	//_, err = url.ParseRequestURI(string(body))
+	//if err != nil {
+	//	return c.NoContent(http.StatusBadRequest)
+	//}
+	//shortURL := utils.MD5(body)
+	//err = s.storage.SetShortURL(shortURL, string(body))
+	//if err != nil {
+	//	return c.NoContent(http.StatusInternalServerError)
+	//}
+	//newURL := utils.NewURL(s.cfg.HostName(), shortURL)
+	//return c.String(http.StatusCreated, newURL)
+	ShortURL, err := s.shortenURL(string(body))
+
 	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
+		if err == interfaces.ErrAlreadyExists {
+			return c.NoContent(http.StatusInternalServerError)
+		} else {
+			return c.NoContent(http.StatusBadRequest)
+		}
 	}
-	shortURL := utils.MD5(body)
-	err = s.storage.SetShortURL(shortURL, string(body))
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	newURL := utils.NewURL(s.cfg.HostName(), shortURL)
-	return c.String(http.StatusCreated, newURL)
+	return c.String(http.StatusCreated, ShortURL)
 }
 
 func (s Server) GetURL(c echo.Context) error {
@@ -104,7 +114,7 @@ func (s Server) PostJSON(c echo.Context) error {
 func (s Server) shortenURL(URL string) (string, error) {
 	_, err := url.ParseRequestURI(URL)
 	if err != nil {
-		return "", interfaces.ItIsNotURL
+		return "", err
 	}
 	shortURL := utils.MD5([]byte(URL))
 	err = s.storage.SetShortURL(shortURL, URL)

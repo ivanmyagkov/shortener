@@ -5,7 +5,6 @@ import "errors"
 var (
 	ErrNotFound      = errors.New("not found")
 	ErrAlreadyExists = errors.New("already exists")
-	ItIsNotURL       = errors.New("it isn't URL")
 )
 
 type Storage interface {
