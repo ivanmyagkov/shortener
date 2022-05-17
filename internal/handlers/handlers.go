@@ -86,27 +86,27 @@ func (s Server) PostJSON(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	//_, err = url.ParseRequestURI(request.URL)
-	//if err != nil {
-	//	return c.NoContent(http.StatusBadRequest)
-	//}
-	//
-	//response.ShortURL = utils.MD5([]byte(request.URL))
-	//err = s.storage.SetShortURL(response.ShortURL, request.URL)
-	//if err != nil {
-	//	return c.NoContent(http.StatusInternalServerError)
-	//}
-	//response.ShortURL = utils.NewURL(s.cfg.HostName(), response.ShortURL)
-
-	response.ShortURL, err = s.shortenURL(request.URL)
-
+	_, err = url.ParseRequestURI(request.URL)
 	if err != nil {
-		if err == interfaces.ErrAlreadyExists {
-			return c.NoContent(http.StatusInternalServerError)
-		} else {
-			return c.NoContent(http.StatusBadRequest)
-		}
+		return c.NoContent(http.StatusBadRequest)
 	}
+
+	response.ShortURL = utils.MD5([]byte(request.URL))
+	err = s.storage.SetShortURL(response.ShortURL, request.URL)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	response.ShortURL = utils.NewURL(s.cfg.HostName(), response.ShortURL)
+
+	//response.ShortURL, err = s.shortenURL(request.URL)
+	//
+	//if err != nil {
+	//	if err == interfaces.ErrAlreadyExists {
+	//		return c.NoContent(http.StatusInternalServerError)
+	//	} else {
+	//		return c.NoContent(http.StatusBadRequest)
+	//	}
+	//}
 	return c.JSON(http.StatusCreated, response)
 
 }
