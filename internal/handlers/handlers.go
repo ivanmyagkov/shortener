@@ -31,17 +31,7 @@ func (s Server) PostURL(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	//_, err = url.ParseRequestURI(string(body))
-	//if err != nil {
-	//	return c.NoContent(http.StatusBadRequest)
-	//}
-	//shortURL := utils.MD5(body)
-	//err = s.storage.SetShortURL(shortURL, string(body))
-	//if err != nil {
-	//	return c.NoContent(http.StatusInternalServerError)
-	//}
-	//newURL := utils.NewURL(s.cfg.HostName(), shortURL)
-	//return c.String(http.StatusCreated, newURL)
+
 	ShortURL, err := s.shortenURL(string(body))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
@@ -81,18 +71,6 @@ func (s Server) PostJSON(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-
-	//_, err = url.ParseRequestURI(request.URL)
-	//if err != nil {
-	//	return c.NoContent(http.StatusBadRequest)
-	//}
-	//
-	//response.ShortURL = utils.MD5([]byte(request.URL))
-	//err = s.storage.SetShortURL(response.ShortURL, request.URL)
-	//if err != nil {
-	//	return c.NoContent(http.StatusInternalServerError)
-	//}
-	//response.ShortURL = utils.NewURL(s.cfg.HostName(), response.ShortURL)
 
 	response.ShortURL, err = s.shortenURL(request.URL)
 
