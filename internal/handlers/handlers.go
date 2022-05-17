@@ -71,9 +71,7 @@ func (s Server) PostJSON(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-
 	response.ShortURL, err = s.shortenURL(request.URL)
-
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
