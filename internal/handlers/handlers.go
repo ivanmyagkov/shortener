@@ -44,11 +44,7 @@ func (s Server) PostURL(c echo.Context) error {
 	//return c.String(http.StatusCreated, newURL)
 	ShortURL, err := s.shortenURL(string(body))
 	if err != nil {
-		if err == interfaces.ErrAlreadyExists {
-			return c.NoContent(http.StatusInternalServerError)
-		} else {
-			return c.NoContent(http.StatusBadRequest)
-		}
+		return c.NoContent(http.StatusBadRequest)
 	}
 	return c.String(http.StatusCreated, ShortURL)
 }

@@ -49,21 +49,22 @@ func (s *InFile) Close() {
 }
 
 func (s *InFile) GetURL(key string) (string, error) {
-	s.Mutex.Lock()
+	s.Lock()
+	defer s.Unlock()
 	if v, ok := s.cache[key]; ok {
 		return v, nil
 	}
-	s.Mutex.Unlock()
+
 	return "", interfaces.ErrNotFound
 }
 
 func (s *InFile) SetShortURL(key string, value string) error {
-	s.Mutex.Lock()
+	s.Lock()
+	defer s.Unlock()
 	if _, ok := s.cache[key]; ok {
 		return interfaces.ErrAlreadyExists
 	}
 	s.cache[key] = value
-	s.Mutex.Unlock()
 	data := make(map[string]string)
 	data[key] = value
 	return s.encoder.Encode(&data)
