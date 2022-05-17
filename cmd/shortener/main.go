@@ -5,12 +5,13 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/labstack/echo/v4"
+
 	"github.com/ivanmyagkov/shortener.git/internal/config"
 	"github.com/ivanmyagkov/shortener.git/internal/handlers"
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 	"github.com/ivanmyagkov/shortener.git/internal/middleware"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
-	"github.com/labstack/echo/v4"
 )
 
 var flags struct {
@@ -38,13 +39,12 @@ func init() {
 
 func main() {
 	var db interfaces.Storage
-	var err error
 
 	cfg := config.NewConfig(flags.a, flags.b, flags.f)
 
 	if cfg.FilePath() != "" {
-		db, err = storage.NewInFile(cfg.FilePath())
-		if err != nil {
+		var err error
+		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
 			log.Fatal(err)
 		}
 	} else {
@@ -55,8 +55,8 @@ func main() {
 	srv := handlers.New(db, cfg)
 
 	e := echo.New()
-	e.Use(middleware.CompressHandle())
-	e.Use(middleware.Decompress())
+	e.Use(middleware.CompressHandle)
+	e.Use(middleware.Decompress)
 
 	e.GET("/:id", srv.GetURL)
 	e.POST("/", srv.PostURL)

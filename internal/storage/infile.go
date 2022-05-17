@@ -3,12 +3,15 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
+	"log"
 	"os"
+	"sync"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 )
 
 type InFile struct {
+	sync.Mutex
 	file    *os.File
 	cache   map[string]string
 	encoder *json.Encoder
@@ -40,20 +43,27 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 
 func (s *InFile) Close() {
 	s.cache = nil
+	if err := s.file.Close(); err != nil {
+		log.Println(err)
+	}
 }
 
 func (s *InFile) GetURL(key string) (string, error) {
+	s.Mutex.Lock()
 	if v, ok := s.cache[key]; ok {
 		return v, nil
 	}
+	s.Mutex.Unlock()
 	return "", interfaces.ErrNotFound
 }
 
 func (s *InFile) SetShortURL(key string, value string) error {
+	s.Mutex.Lock()
 	if _, ok := s.cache[key]; ok {
 		return interfaces.ErrAlreadyExists
 	}
 	s.cache[key] = value
+	s.Mutex.Unlock()
 	data := make(map[string]string)
 	data[key] = value
 	return s.encoder.Encode(&data)

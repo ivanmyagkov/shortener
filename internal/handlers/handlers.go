@@ -3,14 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 	_ "github.com/ivanmyagkov/shortener.git/internal/storage"
 	"github.com/ivanmyagkov/shortener.git/internal/utils"
-	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
@@ -37,7 +37,7 @@ func (s Server) PostURL(c echo.Context) error {
 	shortURL := utils.MD5(body)
 	err = s.storage.SetShortURL(shortURL, string(body))
 	if err != nil {
-		log.Println(err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	newURL := utils.NewURL(s.cfg.HostName(), shortURL)
 	return c.String(http.StatusCreated, newURL)
@@ -76,18 +76,41 @@ func (s Server) PostJSON(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	_, err = url.ParseRequestURI(request.URL)
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
+	//_, err = url.ParseRequestURI(request.URL)
+	//if err != nil {
+	//	return c.NoContent(http.StatusBadRequest)
+	//}
+	//
+	//response.ShortURL = utils.MD5([]byte(request.URL))
+	//err = s.storage.SetShortURL(response.ShortURL, request.URL)
+	//if err != nil {
+	//	return c.NoContent(http.StatusInternalServerError)
+	//}
+	//response.ShortURL = utils.NewURL(s.cfg.HostName(), response.ShortURL)
 
-	response.ShortURL = utils.MD5([]byte(request.URL))
-	err = s.storage.SetShortURL(response.ShortURL, request.URL)
-	if err != nil {
-		log.Println(err)
-	}
-	response.ShortURL = utils.NewURL(s.cfg.HostName(), response.ShortURL)
+	response.ShortURL, err = s.shortenURL(request.URL)
 
+	if err != nil {
+		if err == interfaces.ErrAlreadyExists {
+			return c.NoContent(http.StatusInternalServerError)
+		} else {
+			return c.NoContent(http.StatusBadRequest)
+		}
+	}
 	return c.JSON(http.StatusCreated, response)
 
+}
+
+func (s Server) shortenURL(URL string) (string, error) {
+	_, err := url.ParseRequestURI(URL)
+	if err != nil {
+		return "", interfaces.ItIsNotURL
+	}
+	shortURL := utils.MD5([]byte(URL))
+	err = s.storage.SetShortURL(shortURL, URL)
+	if err != nil {
+		return "", err
+	}
+	shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
+	return shortURL, nil
 }

@@ -9,11 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ivanmyagkov/shortener.git/internal/config"
-	"github.com/ivanmyagkov/shortener.git/internal/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ivanmyagkov/shortener.git/internal/config"
+	"github.com/ivanmyagkov/shortener.git/internal/storage"
 )
 
 func TestGetUrl(t *testing.T) {
