@@ -179,7 +179,7 @@ func TestPostJSON(t *testing.T) {
 		},
 		{
 			name:  "with body",
-			value: `{"url": "https://www.yandex.ru"}`,
+			value: `{"url" : "https://www.yandex.ru"}`,
 			args: args{
 				db:  storage.NewDBConn(),
 				cfg: config.NewConfig(":8080", "http://localhost:8080", ""),

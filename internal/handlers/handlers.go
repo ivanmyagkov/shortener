@@ -61,13 +61,7 @@ func (s Server) PostJSON(c echo.Context) error {
 	var response struct {
 		ShortURL string `json:"result"`
 	}
-
-	body, err := io.ReadAll(c.Request().Body)
-	if err != nil || len(body) == 0 {
-		return c.NoContent(http.StatusBadRequest)
-	}
-
-	err = json.Unmarshal(body, &request)
+	err := json.NewDecoder(c.Request().Body).Decode(&request)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
