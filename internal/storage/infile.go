@@ -43,11 +43,11 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 				return nil, err
 			}
 			stor[dataFile.ShortURL] = dataFile.BaseURL
+			modelURL.ShortURL = dataFile.ShortURL
+			modelURL.BaseURL = dataFile.BaseURL
+			data[dataFile.UserID] = append(data[dataFile.UserID], modelURL)
 		}
 	}
-	modelURL.ShortURL = dataFile.ShortURL
-	modelURL.BaseURL = dataFile.BaseURL
-	data[dataFile.UserID] = append(data[dataFile.UserID], modelURL)
 
 	return &InFile{
 		file:     file,
