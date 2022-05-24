@@ -109,7 +109,7 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 	}
 	userID, err := s.user.ReadSessionID(cookie.Value)
 	if err != nil {
-		log.Println(err)
+		return c.NoContent(http.StatusNoContent)
 	}
 	URLs, err := s.storage.GetAllURLsByUserID(userID)
 	if err != nil {

@@ -32,15 +32,17 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 	}
 	var modelURL interfaces.ModelURL
 	data := make(map[string][]interfaces.ModelURL)
+	stor := make(map[string]string)
 	var dataFile ModelFile
 
 	if stat, _ := file.Stat(); stat.Size() != 0 {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			err := json.Unmarshal(scanner.Bytes(), &modelURL)
+			err := json.Unmarshal(scanner.Bytes(), &dataFile)
 			if err != nil {
 				return nil, err
 			}
+			stor[dataFile.ShortURL] = dataFile.BaseURL
 		}
 	}
 	modelURL.ShortURL = dataFile.ShortURL
@@ -50,7 +52,7 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 	return &InFile{
 		file:     file,
 		DataFile: dataFile,
-		Storage:  make(map[string]string),
+		Storage:  stor,
 		cache:    data,
 		encoder:  json.NewEncoder(file),
 	}, nil
@@ -74,10 +76,7 @@ func (s *InFile) GetURL(key string) (string, error) {
 }
 
 func (s *InFile) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
-	log.Println("dvrjfnsrjbvnkhjvbrf", s.cache)
-	log.Println(s.cache["bfe6a2e657cde9c2145e98b3051daf0c"])
 	if _, ok := s.cache[userID]; ok {
-		log.Println("scescsec")
 		return s.cache[userID], nil
 	}
 	return nil, interfaces.ErrNotFound
