@@ -112,8 +112,16 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 		return c.NoContent(http.StatusNoContent)
 	}
 	URLs, err := s.storage.GetAllURLsByUserID(userID)
+	log.Println(URLs)
 	if err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
-	return c.JSON(http.StatusOK, URLs)
+	var URLArray []interfaces.ModelURL
+	var model interfaces.ModelURL
+	for _, v := range URLs {
+		model.BaseURL = v.BaseURL
+		model.ShortURL = utils.NewURL(s.cfg.HostName(), v.ShortURL)
+		URLArray = append(URLArray, model)
+	}
+	return c.JSON(http.StatusOK, URLArray)
 }
