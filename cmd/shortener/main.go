@@ -51,16 +51,19 @@ func main() {
 		db = storage.NewDBConn()
 	}
 	defer db.Close()
-
-	srv := handlers.New(db, cfg)
+	usr := storage.New()
+	mw := middleware.New(usr)
+	srv := handlers.New(db, cfg, usr)
 
 	e := echo.New()
 	e.Use(middleware.CompressHandle)
 	e.Use(middleware.Decompress)
+	e.Use(mw.SessionWithCookies)
 
 	e.GET("/:id", srv.GetURL)
 	e.POST("/", srv.PostURL)
 	e.POST("/api/shorten", srv.PostJSON)
+	e.GET("/api/user/urls", srv.GetURLsByUserID)
 
 	if err := e.Start(cfg.SrvAddr()); err != nil {
 		e.Logger.Fatal(err)

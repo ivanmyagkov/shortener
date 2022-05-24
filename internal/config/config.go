@@ -6,6 +6,8 @@ type Config struct {
 	fileStoragePath string
 }
 
+const Secret = "vfktymrjqtkjxrt[jkjlyjpb"
+
 //getters
 
 func (c Config) SrvAddr() string {

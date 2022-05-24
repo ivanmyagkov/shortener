@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"sync"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
@@ -9,35 +8,50 @@ import (
 
 type DB struct {
 	sync.Mutex
-	ShortURL map[string]string
+	Storage  map[string]string
+	ShortURL map[string][]interfaces.ModelURL
 }
 
 func NewDBConn() *DB {
 	return &DB{
-		ShortURL: make(map[string]string),
+		Storage:  make(map[string]string),
+		ShortURL: make(map[string][]interfaces.ModelURL),
 	}
 }
 
 func (db *DB) GetURL(shortURL string) (string, error) {
 	db.Lock()
 	defer db.Unlock()
-	if v, ok := db.ShortURL[shortURL]; ok {
-		return v, nil
+	if URL, ok := db.Storage[shortURL]; ok {
+		return URL, nil
 	}
 	return "", interfaces.ErrNotFound
 }
 
-func (db *DB) SetShortURL(shortURL string, URL string) error {
+func (db *DB) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
+	if _, ok := db.ShortURL[userID]; ok {
+		return db.ShortURL[userID], nil
+	}
+	return nil, interfaces.ErrNotFound
+}
+
+func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 	db.Lock()
 	defer db.Unlock()
-	if _, ok := db.ShortURL[shortURL]; ok {
-		log.Println(interfaces.ErrAlreadyExists)
-		return nil
+	modelURL := interfaces.ModelURL{
+		ShortURL: shortURL,
+		BaseURL:  URL,
 	}
-	db.ShortURL[shortURL] = URL
-
+	if _, ok := db.ShortURL[userID]; ok {
+		for _, val := range db.ShortURL[userID] {
+			if val.ShortURL == shortURL {
+				return nil
+			}
+		}
+	}
+	db.ShortURL[userID] = append(db.ShortURL[userID], modelURL)
+	db.Storage[modelURL.ShortURL] = modelURL.BaseURL
 	return nil
-
 }
 func (db *DB) Close() {
 	db.ShortURL = nil
