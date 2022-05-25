@@ -52,7 +52,6 @@ func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
 
 }
 func (MU *DBUsers) ReadSessionID(id string) (string, error) {
-	//log.Println("read cookie = ", id)
 	key := []byte(config.Secret)
 	dst, err := hex.DecodeString(id)
 	if err != nil {
@@ -65,6 +64,5 @@ func (MU *DBUsers) ReadSessionID(id string) (string, error) {
 	//decryption session id by secret key
 	src := make([]byte, 16)
 	aesblock.Decrypt(src, dst)
-	//log.Println("cid=", hex.EncodeToString(src))
 	return hex.EncodeToString(src), nil
 }

@@ -68,7 +68,6 @@ func (s *InFile) Close() {
 func (s *InFile) GetURL(key string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
-	log.Println(s.Storage)
 	if _, ok := s.Storage[key]; ok {
 		return s.Storage[key], nil
 	}
