@@ -111,9 +111,8 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
-	URLs, err := s.storage.GetAllURLsByUserID(userID)
-	log.Println(URLs)
-	if err != nil {
+	var URLs []interfaces.ModelURL
+	if URLs, err = s.storage.GetAllURLsByUserID(userID); err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
 	var URLArray []interfaces.ModelURL
