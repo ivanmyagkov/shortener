@@ -53,7 +53,7 @@ func main() {
 			log.Fatal(err)
 		}
 	} else if cfg.Database() != "" {
-		db = storage.NewDb(cfg.Database())
+		db = storage.NewDB(cfg.Database())
 	} else {
 		db = storage.NewDBConn()
 	}

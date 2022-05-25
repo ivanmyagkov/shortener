@@ -13,7 +13,7 @@ type Storage struct {
 	db *sql.DB
 }
 
-func NewDb(psqlConn string) *Storage {
+func NewDB(psqlConn string) *Storage {
 	db, err := sql.Open("postgres", psqlConn)
 	if err != nil {
 		log.Fatal(err)
