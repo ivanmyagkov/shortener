@@ -104,3 +104,7 @@ func (s *InFile) SetShortURL(userID, key, value string) error {
 	return s.encoder.Encode(&s.DataFile)
 
 }
+
+func (s *InFile) Ping() error {
+	return nil
+}

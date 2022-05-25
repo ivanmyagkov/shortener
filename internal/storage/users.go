@@ -3,7 +3,6 @@ package storage
 import (
 	"crypto/aes"
 	"encoding/hex"
-	"log"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
 )
@@ -47,7 +46,6 @@ func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
 
 	aesblock.Encrypt(dst, src)
 	cookie := hex.EncodeToString(dst)
-	log.Println(cookie)
 	return cookie, nil
 
 }

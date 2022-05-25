@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -22,9 +21,8 @@ func New(users interfaces.Users) *MW {
 
 func (M *MW) SessionWithCookies(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		cookie, err := c.Request().Cookie("cookie")
+		cookie, err := c.Cookie("cookie")
 		if err != nil {
-			log.Println(2)
 			uid := utils.CreateID(16)
 			cookie := new(http.Cookie)
 			cookie.Name = "cookie"

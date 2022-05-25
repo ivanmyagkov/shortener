@@ -54,6 +54,9 @@ func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 	db.Storage[modelURL.ShortURL] = modelURL.BaseURL
 	return nil
 }
+func (db *DB) Ping() error {
+	return nil
+}
 func (db *DB) Close() {
 	db.ShortURL = nil
 

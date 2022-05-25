@@ -12,6 +12,7 @@ type Storage interface {
 	GetURL(shortURL string) (string, error)
 	GetAllURLsByUserID(userID string) ([]ModelURL, error)
 	SetShortURL(userID, shortURL, baseURL string) error
+	Ping() error
 	Close()
 }
 

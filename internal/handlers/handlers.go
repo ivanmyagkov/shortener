@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -64,7 +63,6 @@ func (s Server) PostJSON(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	log.Println(cookie.Value)
 	userID, _ := s.user.ReadSessionID(cookie.Value)
 
 	var request struct {
@@ -97,6 +95,12 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	}
 	shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 	return shortURL, nil
+}
+func (s Server) GetPing(c echo.Context) error {
+	if err := s.storage.Ping(); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	return c.NoContent(http.StatusOK)
 }
 
 func (s Server) GetURLsByUserID(c echo.Context) error {
