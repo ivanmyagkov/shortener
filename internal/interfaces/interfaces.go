@@ -21,7 +21,7 @@ type Config interface {
 }
 
 type Users interface {
-	CreateSissionID() (string, error)
+	CreateSissionID(string2 string) (string, error)
 	ReadSessionID(id string) (string, error)
 }
 

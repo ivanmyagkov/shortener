@@ -29,7 +29,8 @@ func (db *DB) GetURL(shortURL string) (string, error) {
 }
 
 func (db *DB) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
-	if _, ok := db.ShortURL[userID]; ok {
+	var ok bool
+	if _, ok = db.ShortURL[userID]; ok {
 		return db.ShortURL[userID], nil
 	}
 	return nil, interfaces.ErrNotFound

@@ -103,15 +103,11 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 
 func (s Server) GetURLsByUserID(c echo.Context) error {
 
-	cookie, err := c.Request().Cookie("cookie")
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
-	userID, err := s.user.ReadSessionID(cookie.Value)
-	if err != nil {
-		return c.NoContent(http.StatusNoContent)
-	}
+	cookie, _ := c.Cookie("cookie")
+	userID, _ := s.user.ReadSessionID(cookie.Value)
+
 	var URLs []interfaces.ModelURL
+	var err error
 	if URLs, err = s.storage.GetAllURLsByUserID(userID); err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
