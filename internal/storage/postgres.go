@@ -46,5 +46,5 @@ func (D *Storage) Ping() error {
 }
 
 func (D *Storage) Close() {
-	D.Close()
+	D.db.Close()
 }
