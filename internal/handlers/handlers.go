@@ -29,7 +29,7 @@ func New(storage interfaces.Storage, config interfaces.Config, user interfaces.U
 }
 
 func (s Server) PostURL(c echo.Context) error {
-	cookie, err := c.Cookie("cookie")
+	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -60,7 +60,7 @@ func (s Server) GetURL(c echo.Context) error {
 }
 
 func (s Server) PostJSON(c echo.Context) error {
-	cookie, err := c.Cookie("cookie")
+	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -103,7 +103,7 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 
 func (s Server) GetURLsByUserID(c echo.Context) error {
 
-	cookie, err := c.Cookie("cookie")
+	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -123,5 +123,6 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 		model.ShortURL = utils.NewURL(s.cfg.HostName(), v.ShortURL)
 		URLArray = append(URLArray, model)
 	}
+
 	return c.JSON(http.StatusOK, URLArray)
 }

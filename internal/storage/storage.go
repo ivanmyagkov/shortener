@@ -22,8 +22,8 @@ func NewDBConn() *DB {
 func (db *DB) GetURL(shortURL string) (string, error) {
 	db.Lock()
 	defer db.Unlock()
-	if URL, ok := db.Storage[shortURL]; ok {
-		return URL, nil
+	if _, ok := db.Storage[shortURL]; ok {
+		return db.Storage[shortURL], nil
 	}
 	return "", interfaces.ErrNotFound
 }

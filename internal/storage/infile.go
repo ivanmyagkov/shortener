@@ -68,8 +68,9 @@ func (s *InFile) Close() {
 func (s *InFile) GetURL(key string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
-	if URL, ok := s.Storage[key]; ok {
-		return URL, nil
+	log.Println(s.Storage)
+	if _, ok := s.Storage[key]; ok {
+		return s.Storage[key], nil
 	}
 
 	return "", interfaces.ErrNotFound
@@ -100,7 +101,7 @@ func (s *InFile) SetShortURL(userID, key, value string) error {
 		}
 	}
 	s.cache[userID] = append(s.cache[userID], modelURL)
-
+	s.Storage[modelURL.ShortURL] = modelURL.BaseURL
 	return s.encoder.Encode(&s.DataFile)
 
 }
