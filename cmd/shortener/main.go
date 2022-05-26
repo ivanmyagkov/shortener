@@ -72,6 +72,7 @@ func main() {
 	e.GET("/ping", srv.GetPing)
 	e.POST("/", srv.PostURL)
 	e.POST("/api/shorten", srv.PostJSON)
+	e.POST("/api/shorten/batch", srv.PostBatch)
 
 	if err := e.Start(cfg.SrvAddr()); err != nil {
 		e.Logger.Fatal(err)

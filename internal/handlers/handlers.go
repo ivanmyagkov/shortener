@@ -123,3 +123,25 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, URLArray)
 }
+
+func (s Server) PostBatch(c echo.Context) error {
+	cookie, _ := c.Cookie("cookie")
+	userID, _ := s.user.ReadSessionID(cookie.Value)
+	var batchReq []interfaces.BatchRequest
+	var batchRes interfaces.BatchResponse
+	var batchArr []interfaces.BatchResponse
+	err := json.NewDecoder(c.Request().Body).Decode(&batchReq)
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	for _, batch := range batchReq {
+		batchRes.CorrelationId = batch.CorrelationId
+		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
+		if err != nil {
+			return c.NoContent(http.StatusBadRequest)
+		}
+		batchArr = append(batchArr, batchRes)
+	}
+	return c.JSON(http.StatusOK, batchArr)
+}
