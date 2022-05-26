@@ -136,12 +136,12 @@ func (s Server) PostBatch(c echo.Context) error {
 	}
 
 	for _, batch := range batchReq {
-		batchRes.CorrelationId = batch.CorrelationId
+		batchRes.CorrelationID = batch.CorrelationID
 		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
 		if err != nil {
 			return c.NoContent(http.StatusBadRequest)
 		}
 		batchArr = append(batchArr, batchRes)
 	}
-	return c.JSON(http.StatusOK, batchArr)
+	return c.JSON(http.StatusCreated, batchArr)
 }
