@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -105,6 +106,7 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	}
 	shortURL := utils.MD5([]byte(URL))
 	err = s.storage.SetShortURL(userID, shortURL, URL)
+	log.Println(err)
 	if errors.Is(err, interfaces.ErrAlreadyExists) {
 		shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 		return shortURL, interfaces.ErrAlreadyExists

@@ -87,6 +87,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 		_, err := D.db.ExecContext(ctx, query, userID, userURLID)
 
 		if err != nil {
+			log.Println(err)
 			return interfaces.ErrAlreadyExists
 		}
 	}
