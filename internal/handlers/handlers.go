@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -39,8 +40,8 @@ func (s Server) PostURL(c echo.Context) error {
 	}
 
 	ShortURL, err := s.shortenURL(userID, string(body))
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
+	if errors.Is(err, interfaces.ErrAlreadyExists) {
+		return c.NoContent(http.StatusConflict)
 	}
 	return c.String(http.StatusCreated, ShortURL)
 }
@@ -77,8 +78,8 @@ func (s Server) PostJSON(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	response.ShortURL, err = s.shortenURL(userID, request.URL)
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
+	if errors.Is(err, interfaces.ErrAlreadyExists) {
+		return c.JSON(http.StatusConflict, response.ShortURL)
 	}
 	return c.JSON(http.StatusCreated, response)
 }
@@ -90,12 +91,14 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	}
 	shortURL := utils.MD5([]byte(URL))
 	err = s.storage.SetShortURL(userID, shortURL, URL)
-	if err != nil {
-		return "", err
+	if errors.Is(err, interfaces.ErrAlreadyExists) {
+		shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
+		return shortURL, interfaces.ErrAlreadyExists
 	}
 	shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 	return shortURL, nil
 }
+
 func (s Server) GetPing(c echo.Context) error {
 	if err := s.storage.Ping(); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
@@ -134,14 +137,15 @@ func (s Server) PostBatch(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-
+	httpStatus := http.StatusCreated
 	for _, batch := range batchReq {
 		batchRes.CorrelationID = batch.CorrelationID
 		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
-		if err != nil {
-			return c.NoContent(http.StatusBadRequest)
+
+		if errors.Is(err, interfaces.ErrAlreadyExists) {
+			httpStatus = http.StatusConflict
 		}
 		batchArr = append(batchArr, batchRes)
 	}
-	return c.JSON(http.StatusCreated, batchArr)
+	return c.JSON(httpStatus, batchArr)
 }
