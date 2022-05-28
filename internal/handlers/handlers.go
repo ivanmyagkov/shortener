@@ -42,11 +42,15 @@ func (s Server) PostURL(c echo.Context) error {
 	}
 
 	ShortURL, err := s.shortenURL(userID, string(body))
-	if errors.Is(err, interfaces.ErrAlreadyExists) {
-		return c.String(http.StatusConflict, ShortURL)
-	} else {
-		return c.NoContent(http.StatusBadRequest)
+
+	if err != nil {
+		if errors.Is(err, interfaces.ErrAlreadyExists) {
+			return c.String(http.StatusConflict, ShortURL)
+		} else {
+			return c.NoContent(http.StatusBadRequest)
+		}
 	}
+
 	return c.String(http.StatusCreated, ShortURL)
 }
 
@@ -82,11 +86,14 @@ func (s Server) PostJSON(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	response.ShortURL, err = s.shortenURL(userID, request.URL)
-	if errors.Is(err, interfaces.ErrAlreadyExists) {
-		return c.JSON(http.StatusConflict, response.ShortURL)
-	} else {
-		return c.NoContent(http.StatusBadRequest)
+	if err != nil {
+		if errors.Is(err, interfaces.ErrAlreadyExists) {
+			return c.JSON(http.StatusConflict, response.ShortURL)
+		} else {
+			return c.NoContent(http.StatusBadRequest)
+		}
 	}
+
 	return c.JSON(http.StatusCreated, response)
 }
 
