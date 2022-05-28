@@ -85,6 +85,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 		D.db.QueryRowContext(ctx, querySelect, baseURL).Scan(&userURLID)
 		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
 		_, err := D.db.ExecContext(ctx, query, userID, userURLID)
+
 		if err != nil {
 			return interfaces.ErrAlreadyExists
 		}
@@ -107,15 +108,11 @@ func createTable(db *sql.DB) error {
 	  url_id int not null  references urls(id)
 	);
 	`
-	alter := `ALTER TABLE users_url ADD CONSTRAINT users_url_user_id_key UNIQUE (user_id, url_id)`
 	_, err := db.Exec(query)
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec(alter)
-	if err != nil {
-		return err
-	}
+
 	return nil
 
 }
