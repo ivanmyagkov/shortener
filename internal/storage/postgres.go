@@ -61,10 +61,10 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&model.ShortURL, &model.BaseURL)
-		if err != nil {
+		if err = rows.Scan(&model.ShortURL, &model.BaseURL); err != nil {
 			return nil, err
 		}
+
 		modelURL = append(modelURL, model)
 	}
 
