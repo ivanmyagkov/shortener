@@ -82,11 +82,13 @@ func (s Server) PostJSON(c echo.Context) error {
 		ShortURL string `json:"result"`
 	}
 	err = json.NewDecoder(c.Request().Body).Decode(&request)
+
+	log.Println(err)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	response.ShortURL, err = s.shortenURL(userID, request.URL)
-	log.Println(response)
+	log.Println(err)
 	if err != nil {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
 			return c.JSON(http.StatusConflict, response.ShortURL)

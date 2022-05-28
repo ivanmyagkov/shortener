@@ -54,14 +54,14 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	}
 	defer selectStmt.Close()
 
-	row, err := selectStmt.Query(userID)
+	rows, err := selectStmt.Query(userID)
 	if err != nil {
 		return nil, err
 	}
-	defer row.Close()
+	defer rows.Close()
 
-	for row.Next() {
-		err := row.Scan(&model.ShortURL, &model.BaseURL)
+	for rows.Next() {
+		err := rows.Scan(&model.ShortURL, &model.BaseURL)
 		if err != nil {
 			return nil, err
 		}
