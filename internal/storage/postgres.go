@@ -68,23 +68,23 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 }
 
 func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	//ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	//defer cancel()
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
-	D.db.QueryRowContext(ctx, query, baseURL, shortURL).Scan(&urlID)
+	D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
 	if urlID != 0 {
 		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
-		_, err := D.db.ExecContext(ctx, query, userID, urlID)
+		_, err := D.db.Exec(query, userID, urlID)
 		if err != nil {
 			return err
 		}
 	} else {
 		var userURLID int
 		querySelect := `SELECT id FROM urls WHERE base_url = $1;`
-		D.db.QueryRowContext(ctx, querySelect, baseURL).Scan(&userURLID)
-		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
-		_, err := D.db.ExecContext(ctx, query, userID, userURLID)
+		D.db.QueryRow(querySelect, baseURL).Scan(&userURLID)
+		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2) ;`
+		_, err := D.db.Exec(query, userID, userURLID)
 
 		if err != nil {
 			log.Println(err)
@@ -106,14 +106,14 @@ func createTable(db *sql.DB) error {
 	);
 	CREATE TABLE IF NOT EXISTS users_url(
 	  user_id text not null ,
-	  url_id int not null  references urls(id)
+	  url_id int not null  references urls(id),
+	  CONSTRAINT unique_url UNIQUE (user_id, url_id)
 	);
 	`
 	_, err := db.Exec(query)
 	if err != nil {
 		return err
 	}
-
 	return nil
 
 }
