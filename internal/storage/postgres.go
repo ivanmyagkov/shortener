@@ -107,8 +107,12 @@ func createTable(db *sql.DB) error {
 	  url_id int not null  references urls(id)
 	);
 	`
-
+	alter := `ALTER TABLE users_url ADD CONSTRAINT users_url_user_id_key UNIQUE (user_id, url_id)`
 	_, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(alter)
 	if err != nil {
 		return err
 	}
