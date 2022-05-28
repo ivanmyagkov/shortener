@@ -54,6 +54,9 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	}
 	defer rows.Close()
 
+	if err = rows.Err(); err != nil {
+		log.Println(err)
+	}
 	for rows.Next() {
 		if err = rows.Scan(&model.ShortURL, &model.BaseURL); err != nil {
 			return nil, err
