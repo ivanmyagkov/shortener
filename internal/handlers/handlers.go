@@ -33,8 +33,10 @@ func (s Server) PostURL(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
+
 	userID, _ := s.user.ReadSessionID(cookie.Value)
 	body, err := io.ReadAll(c.Request().Body)
+
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
