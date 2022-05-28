@@ -95,7 +95,7 @@ func (s *InFile) SetShortURL(userID, key, value string) error {
 	if _, ok := s.cache[userID]; ok {
 		for _, val := range s.cache[userID] {
 			if val.ShortURL == key {
-				return nil
+				return interfaces.ErrAlreadyExists
 			}
 		}
 	}

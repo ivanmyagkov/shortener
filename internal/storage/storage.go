@@ -46,7 +46,7 @@ func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 	if _, ok := db.ShortURL[userID]; ok {
 		for _, val := range db.ShortURL[userID] {
 			if val.ShortURL == shortURL {
-				return nil
+				return interfaces.ErrAlreadyExists
 			}
 		}
 	}

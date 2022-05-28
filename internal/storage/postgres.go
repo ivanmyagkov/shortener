@@ -90,9 +90,8 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
 		_, err := D.db.ExecContext(ctx, query, userID, urlID)
 		if err != nil {
-			return err
+			return interfaces.ErrAlreadyExists
 		}
-		return interfaces.ErrAlreadyExists
 	}
 	return nil
 }
