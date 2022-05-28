@@ -41,7 +41,7 @@ func (s Server) PostURL(c echo.Context) error {
 
 	ShortURL, err := s.shortenURL(userID, string(body))
 	if errors.Is(err, interfaces.ErrAlreadyExists) {
-		return c.NoContent(http.StatusConflict)
+		return c.String(http.StatusConflict, ShortURL)
 	}
 	return c.String(http.StatusCreated, ShortURL)
 }
