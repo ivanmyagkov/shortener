@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -79,19 +78,18 @@ func (s Server) PostJSON(c echo.Context) error {
 	}
 
 	var response struct {
-		ShortURL string `json:"result"`
+		Result string `json:"result"`
 	}
 	err = json.NewDecoder(c.Request().Body).Decode(&request)
 
-	log.Println(err)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	response.ShortURL, err = s.shortenURL(userID, request.URL)
-	log.Println(err)
+	response.Result, err = s.shortenURL(userID, request.URL)
+
 	if err != nil {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
-			return c.JSON(http.StatusConflict, response.ShortURL)
+			return c.JSON(http.StatusConflict, response)
 		} else {
 			return c.NoContent(http.StatusBadRequest)
 		}
