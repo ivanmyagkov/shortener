@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -42,7 +43,6 @@ func (s Server) PostURL(c echo.Context) error {
 	}
 
 	ShortURL, err := s.shortenURL(userID, string(body))
-
 	if err != nil {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
 			return c.String(http.StatusConflict, ShortURL)
@@ -86,6 +86,7 @@ func (s Server) PostJSON(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	response.ShortURL, err = s.shortenURL(userID, request.URL)
+	log.Println(response)
 	if err != nil {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
 			return c.JSON(http.StatusConflict, response.ShortURL)
@@ -150,15 +151,15 @@ func (s Server) PostBatch(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	httpStatus := http.StatusCreated
+
 	for _, batch := range batchReq {
 		batchRes.CorrelationID = batch.CorrelationID
 		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
 
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
-			httpStatus = http.StatusConflict
+			return c.NoContent(http.StatusBadRequest)
 		}
 		batchArr = append(batchArr, batchRes)
 	}
-	return c.JSON(httpStatus, batchArr)
+	return c.JSON(http.StatusCreated, batchArr)
 }
