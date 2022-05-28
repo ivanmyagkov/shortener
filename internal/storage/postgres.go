@@ -48,13 +48,8 @@ func (D *Storage) GetURL(shortURL string) (string, error) {
 func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
 	var modelURL []interfaces.ModelURL
 	var model interfaces.ModelURL
-	selectStmt, err := D.db.Prepare("SELECT short_url, base_url FROM users_url RIGHT JOIN urls u on users_url.url_id=u.id WHERE user_id=$1;")
+	rows, err := D.db.Query("SELECT short_url, base_url FROM users_url RIGHT JOIN urls u on users_url.url_id=u.id WHERE user_id=$1;", userID)
 	if err != nil {
-		return nil, err
-	}
-	defer selectStmt.Close()
-	var rows *sql.Rows
-	if rows, err = selectStmt.Query(userID); err != sql.ErrNoRows {
 		return nil, err
 	}
 	defer rows.Close()
@@ -63,7 +58,6 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 		if err = rows.Scan(&model.ShortURL, &model.BaseURL); err != nil {
 			return nil, err
 		}
-
 		modelURL = append(modelURL, model)
 	}
 
