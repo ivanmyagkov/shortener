@@ -54,7 +54,7 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	}
 	defer selectStmt.Close()
 	var rows *sql.Rows
-	if rows, err = selectStmt.Query(userID); err != nil {
+	if rows, err = selectStmt.Query(userID); err != sql.ErrNoRows {
 		return nil, err
 	}
 	defer rows.Close()
