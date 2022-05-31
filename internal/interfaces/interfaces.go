@@ -5,9 +5,9 @@ import "errors"
 var (
 	ErrNotFound      = errors.New("not found")
 	ErrAlreadyExists = errors.New("already exists")
-	DbConnErr        = errors.New("DB connection error")
+	DBConnErr        = errors.New("DB connection error")
 	CreateTableErr   = errors.New("create tables error")
-	PingDb           = errors.New("ping Db error")
+	PingDB           = errors.New("ping Db error")
 )
 
 type Storage interface {
