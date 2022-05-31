@@ -191,7 +191,7 @@ func TestPostJSON(t *testing.T) {
 				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
-			want: want{code: 400, body: ""},
+			want: want{code: 500, body: ""},
 		},
 		{
 			name:  "body is wrong",
@@ -202,7 +202,7 @@ func TestPostJSON(t *testing.T) {
 				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
-			want: want{code: 400, body: ""},
+			want: want{code: 500, body: ""},
 		},
 		{
 			name:  "with body",
