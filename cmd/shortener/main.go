@@ -54,7 +54,7 @@ func main() {
 	} else if cfg.Database() != "" {
 		db, err = storage.NewDB(cfg.Database())
 		if err != nil {
-			log.Fatalf("Failed to create db", err)
+			log.Fatalf("Failed to create db %e", err)
 		}
 	} else {
 		db = storage.NewDBConn()

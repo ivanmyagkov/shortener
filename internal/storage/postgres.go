@@ -76,6 +76,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
 	err := D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
+	log.Println(err)
 	if errors.Is(err, sql.ErrNoRows) {
 		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
 		_, err := D.db.Exec(query, userID, urlID)
@@ -83,6 +84,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 			return err
 		}
 	}
+
 	var userURLID int
 	querySelect := `SELECT id FROM urls WHERE base_url = $1;`
 	err = D.db.QueryRow(querySelect, baseURL).Scan(&userURLID)
@@ -94,6 +96,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 	if err != nil {
 		return interfaces.ErrAlreadyExists
 	}
+	log.Println(err)
 	return nil
 }
 

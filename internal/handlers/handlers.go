@@ -107,13 +107,15 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	}
 	shortURL := utils.MD5([]byte(URL))
 	err = s.storage.SetShortURL(userID, shortURL, URL)
-
-	if errors.Is(err, interfaces.ErrAlreadyExists) {
-		shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
-		return shortURL, interfaces.ErrAlreadyExists
-	} else {
-		return "", err
+	if err != nil {
+		if errors.Is(err, interfaces.ErrAlreadyExists) {
+			shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
+			return shortURL, interfaces.ErrAlreadyExists
+		} else {
+			return "", err
+		}
 	}
+
 	shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 	return shortURL, nil
 }
