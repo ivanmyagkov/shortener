@@ -46,14 +46,16 @@ func main() {
 	var db interfaces.Storage
 
 	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d)
-
+	var err error
 	if cfg.FilePath() != "" {
-		var err error
 		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
 			log.Fatal(err)
 		}
 	} else if cfg.Database() != "" {
-		db = storage.NewDB(cfg.Database())
+		db, err = storage.NewDB(cfg.Database())
+		if err != nil {
+			log.Fatalf("Failed to create db", err)
+		}
 	} else {
 		db = storage.NewDBConn()
 	}

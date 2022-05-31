@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -47,7 +46,7 @@ func (s Server) PostURL(c echo.Context) error {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
 			return c.String(http.StatusConflict, ShortURL)
 		} else {
-			return c.NoContent(http.StatusBadRequest)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 
@@ -60,8 +59,10 @@ func (s Server) GetURL(c echo.Context) error {
 	}
 	shortURL := c.Param("id")
 	su, err := s.storage.GetURL(shortURL)
-	if err != nil {
+	if errors.Is(err, interfaces.ErrNotFound) {
 		return c.NoContent(http.StatusBadRequest)
+	} else {
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	c.Response().Header().Set("Location", su)
 	return c.NoContent(http.StatusTemporaryRedirect)
@@ -92,7 +93,7 @@ func (s Server) PostJSON(c echo.Context) error {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
 			return c.JSON(http.StatusConflict, response)
 		} else {
-			return c.NoContent(http.StatusBadRequest)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 
@@ -106,10 +107,12 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	}
 	shortURL := utils.MD5([]byte(URL))
 	err = s.storage.SetShortURL(userID, shortURL, URL)
-	log.Println(err)
+
 	if errors.Is(err, interfaces.ErrAlreadyExists) {
 		shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 		return shortURL, interfaces.ErrAlreadyExists
+	} else {
+		return "", err
 	}
 	shortURL = utils.NewURL(s.cfg.HostName(), shortURL)
 	return shortURL, nil
@@ -124,17 +127,22 @@ func (s Server) GetPing(c echo.Context) error {
 
 func (s Server) GetURLsByUserID(c echo.Context) error {
 
-	cookie, _ := c.Cookie("cookie")
+	cookie, err := c.Request().Cookie("cookie")
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
 	userID, _ := s.user.ReadSessionID(cookie.Value)
 
 	var URLs []interfaces.ModelURL
-	var err error
-	if URLs, err = s.storage.GetAllURLsByUserID(userID); err != nil {
+	URLs, err = s.storage.GetAllURLsByUserID(userID)
+	if err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
-	var URLArray []interfaces.ModelURL
-	var model interfaces.ModelURL
+	URLArray := make([]interfaces.ModelURL, 0, len(URLs))
+
 	for _, v := range URLs {
+		var model interfaces.ModelURL
 		model.BaseURL = v.BaseURL
 		model.ShortURL = utils.NewURL(s.cfg.HostName(), v.ShortURL)
 		URLArray = append(URLArray, model)
@@ -144,17 +152,20 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 }
 
 func (s Server) PostBatch(c echo.Context) error {
-	cookie, _ := c.Cookie("cookie")
+	cookie, err := c.Request().Cookie("cookie")
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
 	userID, _ := s.user.ReadSessionID(cookie.Value)
 	var batchReq []interfaces.BatchRequest
-	var batchRes interfaces.BatchResponse
 	var batchArr []interfaces.BatchResponse
-	err := json.NewDecoder(c.Request().Body).Decode(&batchReq)
+	err = json.NewDecoder(c.Request().Body).Decode(&batchReq)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	for _, batch := range batchReq {
+		var batchRes interfaces.BatchResponse
 		batchRes.CorrelationID = batch.CorrelationID
 		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
 

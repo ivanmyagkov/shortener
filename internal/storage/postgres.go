@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -15,22 +16,22 @@ type Storage struct {
 	db *sql.DB
 }
 
-func NewDB(psqlConn string) *Storage {
+func NewDB(psqlConn string) (*Storage, error) {
 	db, err := sql.Open("postgres", psqlConn)
 	if err != nil {
-		log.Fatal(err)
+		return nil, interfaces.DbConnErr
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatal(err)
+		return nil, interfaces.PingDb
 	}
 	log.Println("Connected to DB!")
 	if err = createTable(db); err != nil {
-		log.Fatal(err)
+		return nil, interfaces.CreateTableErr
 	}
 	return &Storage{
 		db: db,
-	}
+	}, nil
 }
 
 func (D *Storage) GetURL(shortURL string) (string, error) {
@@ -38,9 +39,11 @@ func (D *Storage) GetURL(shortURL string) (string, error) {
 	defer cancel()
 	var baseURL string
 	query := `SELECT base_url FROM urls WHERE short_url=$1`
-	D.db.QueryRowContext(ctx, query, shortURL).Scan(&baseURL)
-	if baseURL == "" {
+	err := D.db.QueryRowContext(ctx, query, shortURL).Scan(&baseURL)
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", interfaces.ErrNotFound
+	} else {
+		return "", err
 	}
 	return baseURL, nil
 }
@@ -55,7 +58,7 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	defer rows.Close()
 
 	if err = rows.Err(); err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	for rows.Next() {
 		if err = rows.Scan(&model.ShortURL, &model.BaseURL); err != nil {
@@ -72,24 +75,24 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 	//defer cancel()
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
-	D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
-	if urlID != 0 {
+	err := D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
+	if errors.Is(err, sql.ErrNoRows) {
 		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
 		_, err := D.db.Exec(query, userID, urlID)
 		if err != nil {
 			return err
 		}
-	} else {
-		var userURLID int
-		querySelect := `SELECT id FROM urls WHERE base_url = $1;`
-		D.db.QueryRow(querySelect, baseURL).Scan(&userURLID)
-		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2) ;`
-		_, err := D.db.Exec(query, userID, userURLID)
-
-		if err != nil {
-			log.Println(err)
-			return interfaces.ErrAlreadyExists
-		}
+	}
+	var userURLID int
+	querySelect := `SELECT id FROM urls WHERE base_url = $1;`
+	err = D.db.QueryRow(querySelect, baseURL).Scan(&userURLID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2) ;`
+	_, err = D.db.Exec(query, userID, userURLID)
+	if err != nil {
+		return interfaces.ErrAlreadyExists
 	}
 	return nil
 }
