@@ -19,15 +19,15 @@ type Storage struct {
 func NewDB(psqlConn string) (*Storage, error) {
 	db, err := sql.Open("postgres", psqlConn)
 	if err != nil {
-		return nil, interfaces.DbConnErr
+		return nil, interfaces.ErrDBConn
 	}
 
 	if err = db.Ping(); err != nil {
-		return nil, interfaces.PingDb
+		return nil, interfaces.ErrPingDB
 	}
 	log.Println("Connected to DB!")
 	if err = createTable(db); err != nil {
-		return nil, interfaces.CreateTableErr
+		return nil, interfaces.ErrCreateTable
 	}
 	return &Storage{
 		db: db,
