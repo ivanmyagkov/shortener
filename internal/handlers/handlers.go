@@ -59,10 +59,12 @@ func (s Server) GetURL(c echo.Context) error {
 	}
 	shortURL := c.Param("id")
 	su, err := s.storage.GetURL(shortURL)
-	if errors.Is(err, interfaces.ErrNotFound) {
-		return c.NoContent(http.StatusBadRequest)
-	} else {
-		return c.NoContent(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, interfaces.ErrNotFound) {
+			return c.NoContent(http.StatusBadRequest)
+		} else {
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 	c.Response().Header().Set("Location", su)
 	return c.NoContent(http.StatusTemporaryRedirect)
@@ -170,10 +172,13 @@ func (s Server) PostBatch(c echo.Context) error {
 		var batchRes interfaces.BatchResponse
 		batchRes.CorrelationID = batch.CorrelationID
 		batchRes.ShortURL, err = s.shortenURL(userID, batch.OriginalURL)
-
-		if errors.Is(err, interfaces.ErrAlreadyExists) {
-			return c.NoContent(http.StatusBadRequest)
+		if err != nil {
+			if errors.Is(err, interfaces.ErrAlreadyExists) {
+				return c.NoContent(http.StatusBadRequest)
+			}
+			return err
 		}
+
 		batchArr = append(batchArr, batchRes)
 	}
 	return c.JSON(http.StatusCreated, batchArr)
