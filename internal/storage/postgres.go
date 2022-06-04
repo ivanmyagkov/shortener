@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
@@ -73,34 +75,37 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 }
 
 func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
-	//ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	//defer cancel()
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
 	err := D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
 	if err != nil {
-		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
-		_, err := D.db.Exec(query, userID, urlID)
+		querySelect := `SELECT id FROM urls WHERE base_url = $1;`
+		err = D.db.QueryRow(querySelect, baseURL).Scan(&urlID)
 		if err != nil {
-			return interfaces.ErrAlreadyExists
+			return err
+		}
+
+		query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2) ;`
+		_, err = D.db.Exec(query, userID, urlID)
+		if err != nil {
+			errCode := err.(*pq.Error).Code
+			if pgerrcode.IsIntegrityConstraintViolation(string(errCode)) {
+				return interfaces.ErrAlreadyExists
+			}
+			return err
 		}
 		return nil
 	}
 
-	var userURLID int
-	querySelect := `SELECT id FROM urls WHERE base_url = $1;`
-	err = D.db.QueryRow(querySelect, baseURL).Scan(&userURLID)
-	log.Println(err)
-	if errors.Is(err, sql.ErrNoRows) {
+	query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2);`
+	_, err = D.db.Exec(query, userID, urlID)
+	if err != nil {
+		errCode := err.(*pq.Error).Code
+		if pgerrcode.IsIntegrityConstraintViolation(string(errCode)) {
+			return interfaces.ErrAlreadyExists
+		}
 		return err
 	}
-	query = `INSERT INTO users_url (user_id, url_id) VALUES ($1, $2) ;`
-	_, err = D.db.Exec(query, userID, userURLID)
-	log.Println(err)
-	if err != nil {
-		return interfaces.ErrAlreadyExists
-	}
-	log.Println(err)
 	return nil
 }
 
@@ -125,7 +130,6 @@ func createTable(db *sql.DB) error {
 		return err
 	}
 	return nil
-
 }
 
 func (D *Storage) Close() {
