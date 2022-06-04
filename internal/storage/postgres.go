@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 )
