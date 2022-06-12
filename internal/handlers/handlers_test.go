@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -14,7 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
+	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
+	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
 
 func TestGetUrl(t *testing.T) {
@@ -76,7 +79,11 @@ func TestGetUrl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
-			s := New(tt.args.db, tt.args.cfg, tt.args.usr)
+			recordCh := make(chan interfaces.Task, 50)
+			doneCh := make(chan struct{})
+
+			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 			ID, _ := tt.args.usr.ReadSessionID(tt.args.cookie)
 			err := s.storage.SetShortURL(ID, tt.args.shortURL, tt.args.URL)
 			if err != nil {
@@ -140,8 +147,12 @@ func TestPostUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			recordCh := make(chan interfaces.Task, 50)
+			doneCh := make(chan struct{})
+
+			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
 			e := echo.New()
-			s := New(tt.args.db, tt.args.cfg, tt.args.usr)
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -223,7 +234,11 @@ func TestPostJSON(t *testing.T) {
 				ShortURL string `json:"result"`
 			}
 			e := echo.New()
-			s := New(tt.args.db, tt.args.cfg, tt.args.usr)
+			recordCh := make(chan interfaces.Task, 50)
+			doneCh := make(chan struct{})
+
+			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 			req := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -284,7 +299,11 @@ func TestServer_GetURLsByUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			e := echo.New()
-			s := New(tt.args.db, tt.args.cfg, tt.args.usr)
+			recordCh := make(chan interfaces.Task, 50)
+			doneCh := make(chan struct{})
+
+			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 			rec := httptest.NewRecorder()
