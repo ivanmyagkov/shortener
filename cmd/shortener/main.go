@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
@@ -14,6 +20,7 @@ import (
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 	"github.com/ivanmyagkov/shortener.git/internal/middleware"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
+	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
 
 var flags struct {
@@ -43,6 +50,9 @@ func init() {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT)
 	var db interfaces.Storage
 
 	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d)
@@ -60,9 +70,23 @@ func main() {
 		db = storage.NewDBConn()
 	}
 	defer db.Close()
+
+	// Init Workers
+	g, _ := errgroup.WithContext(ctx)
+	recordCh := make(chan interfaces.Task, 50)
+	doneCh := make(chan struct{})
+
+	inWorker := workerpool.NewInputWorker(recordCh, doneCh, ctx)
+	for i := 1; i <= runtime.NumCPU(); i++ {
+		outWorker := workerpool.NewOutputWorker(i, recordCh, doneCh, ctx, db)
+		g.Go(outWorker.Do)
+	}
+
+	g.Go(inWorker.Loop)
+
 	usr := storage.New()
 	mw := middleware.New(usr)
-	srv := handlers.New(db, cfg, usr)
+	srv := handlers.New(db, cfg, usr, inWorker)
 
 	e := echo.New()
 	e.Use(middleware.CompressHandle)
@@ -75,6 +99,31 @@ func main() {
 	e.POST("/", srv.PostURL)
 	e.POST("/api/shorten", srv.PostJSON)
 	e.POST("/api/shorten/batch", srv.PostBatch)
+	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
+
+	go func() {
+
+		<-signalChan
+
+		log.Println("Shutting down...")
+
+		cancel()
+		if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
+			e.Logger.Fatal(err)
+		}
+
+		if err = db.Close(); err != nil {
+			log.Fatal(err)
+		}
+
+		close(recordCh)
+		close(doneCh)
+		err = g.Wait()
+		if err != nil {
+			log.Println(err)
+		}
+
+	}()
 
 	if err := e.Start(cfg.SrvAddr()); err != nil {
 		e.Logger.Fatal(err)
