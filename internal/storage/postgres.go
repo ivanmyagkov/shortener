@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgerrcode"
@@ -15,7 +14,6 @@ import (
 )
 
 type Storage struct {
-	mu sync.Mutex
 	db *sql.DB
 }
 
@@ -38,8 +36,6 @@ func NewDB(psqlConn string) (*Storage, error) {
 }
 
 func (D *Storage) GetURL(shortURL string) (string, error) {
-	D.mu.Lock()
-	defer D.mu.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var baseURL string
@@ -74,8 +70,6 @@ func (D *Storage) GetURL(shortURL string) (string, error) {
 }
 
 func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
-	D.mu.Lock()
-	defer D.mu.Unlock()
 	var modelURL []interfaces.ModelURL
 	var model interfaces.ModelURL
 	rows, err := D.db.Query("SELECT short_url, base_url FROM users_url RIGHT JOIN urls u on users_url.url_id=u.id WHERE user_id=$1 and is_deleted=$2;", userID, false)
@@ -98,29 +92,18 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 }
 
 func (D *Storage) DelBatchShortURLs(tasks []interfaces.Task) error {
-	D.mu.Lock()
-	defer D.mu.Unlock()
-	query1 := `SELECT id FROM urls RIGHT JOIN users_url uu on urls.id = uu.url_id WHERE user_id=$1 and short_url=$2`
-	query2 := `UPDATE users_url SET is_deleted = true WHERE user_id = $1 AND url_id = $2`
+
+	query := `UPDATE users_url SET is_deleted = true from (SELECT id FROM urls RIGHT JOIN users_url uu on urls.id = uu.url_id WHERE user_id=$1 and short_url=$2) as urls`
 	for _, task := range tasks {
-		var URLID int
-		err := D.db.QueryRow(query1, task.ID, task.ShortURL).Scan(&URLID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return interfaces.ErrNotFound
-			}
-			return err
-		}
-		_, err = D.db.Exec(query2, task.ID, URLID)
+		_, err := D.db.Exec(query, task.ID, task.ShortURL)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
-	D.mu.Lock()
-	defer D.mu.Unlock()
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
 	err := D.db.QueryRow(query, baseURL, shortURL).Scan(&urlID)
@@ -142,7 +125,6 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 				if err != nil {
 					return err
 				}
-				log.Println(isDel)
 				if !isDel {
 					return interfaces.ErrAlreadyExists
 				}

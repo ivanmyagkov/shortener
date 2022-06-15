@@ -2,13 +2,14 @@ package workerpool
 
 import (
 	"context"
-	"log"
+	"sync"
 	"time"
 
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 )
 
 type InputWorker struct {
+	mu     sync.Mutex
 	ch     chan interfaces.Task
 	done   chan struct{}
 	index  int
@@ -47,10 +48,10 @@ func NewOutputWorker(id int, ch chan interfaces.Task, done chan struct{}, ctx co
 }
 
 func (w *InputWorker) Do(t interfaces.Task) {
-
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	w.ch <- t
 	w.index++
-	log.Println(w.index)
 	if w.index == 20 {
 		w.done <- struct{}{}
 		w.index = 0
