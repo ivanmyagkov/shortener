@@ -3,7 +3,6 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
-	"log"
 	"os"
 	"sync"
 
@@ -58,11 +57,11 @@ func NewInFile(fileName string) (interfaces.Storage, error) {
 	}, nil
 }
 
-func (s *InFile) Close() {
+func (s *InFile) Close() error {
 	s.cache = nil
-	if err := s.file.Close(); err != nil {
-		log.Println(err)
-	}
+	err := s.file.Close()
+	return err
+
 }
 
 func (s *InFile) GetURL(key string) (string, error) {
@@ -82,6 +81,10 @@ func (s *InFile) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error
 	return nil, interfaces.ErrNotFound
 }
 
+func (s *InFile) DelBatchShortURLs(tasks []interfaces.Task) error {
+
+	return nil
+}
 func (s *InFile) SetShortURL(userID, key, value string) error {
 	s.Lock()
 	defer s.Unlock()

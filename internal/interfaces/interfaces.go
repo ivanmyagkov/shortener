@@ -8,14 +8,16 @@ var (
 	ErrDBConn        = errors.New("DB connection error")
 	ErrCreateTable   = errors.New("create tables error")
 	ErrPingDB        = errors.New("ping Db error")
+	ErrWasDeleted    = errors.New("was deleted")
 )
 
 type Storage interface {
 	GetURL(shortURL string) (string, error)
 	GetAllURLsByUserID(userID string) ([]ModelURL, error)
 	SetShortURL(userID, shortURL, baseURL string) error
+	DelBatchShortURLs(tasks []Task) error
 	Ping() error
-	Close()
+	Close() error
 }
 
 type Config interface {
@@ -26,6 +28,15 @@ type Config interface {
 type Users interface {
 	CreateSissionID(string2 string) (string, error)
 	ReadSessionID(id string) (string, error)
+}
+
+type InWorker interface {
+	Do(t Task)
+	Loop() error
+}
+type Task struct {
+	ID       string
+	ShortURL string
 }
 
 type ModelURL struct {

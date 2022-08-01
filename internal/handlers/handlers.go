@@ -15,16 +15,18 @@ import (
 )
 
 type Server struct {
-	storage interfaces.Storage
-	cfg     interfaces.Config
-	user    interfaces.Users
+	storage  interfaces.Storage
+	cfg      interfaces.Config
+	user     interfaces.Users
+	inWorker interfaces.InWorker
 }
 
-func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users) *Server {
+func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users, inWorker interfaces.InWorker) *Server {
 	return &Server{
-		storage: storage,
-		cfg:     config,
-		user:    user,
+		storage:  storage,
+		cfg:      config,
+		user:     user,
+		inWorker: inWorker,
 	}
 }
 
@@ -62,6 +64,8 @@ func (s Server) GetURL(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, interfaces.ErrNotFound) {
 			return c.NoContent(http.StatusBadRequest)
+		} else if errors.Is(err, interfaces.ErrWasDeleted) {
+			return c.NoContent(http.StatusGone)
 		} else {
 			return c.NoContent(http.StatusInternalServerError)
 		}
@@ -182,4 +186,31 @@ func (s Server) PostBatch(c echo.Context) error {
 		batchArr = append(batchArr, batchRes)
 	}
 	return c.JSON(http.StatusCreated, batchArr)
+}
+
+func (s Server) DelURLsBATCH(c echo.Context) error {
+	cookie, err := c.Request().Cookie("cookie")
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	userID, _ := s.user.ReadSessionID(cookie.Value)
+	var model interfaces.Task
+	model.ID = userID
+
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil || len(body) == 0 {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	deleteURLs := make([]string, 0)
+	err = json.Unmarshal(body, &deleteURLs)
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	for _, url := range deleteURLs {
+		model.ShortURL = url
+		s.inWorker.Do(model)
+	}
+
+	return c.NoContent(http.StatusAccepted)
 }

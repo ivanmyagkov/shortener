@@ -35,7 +35,10 @@ func (db *DB) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
 	}
 	return nil, interfaces.ErrNotFound
 }
+func (db *DB) DelBatchShortURLs(tasks []interfaces.Task) error {
 
+	return nil
+}
 func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 	db.Lock()
 	defer db.Unlock()
@@ -57,7 +60,8 @@ func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 func (db *DB) Ping() error {
 	return nil
 }
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	db.ShortURL = nil
+	return nil
 
 }
