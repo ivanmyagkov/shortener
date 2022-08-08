@@ -1,3 +1,4 @@
+//	Server's handlers
 package handlers
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/ivanmyagkov/shortener.git/internal/utils"
 )
 
+// Server struct
 type Server struct {
 	storage  interfaces.Storage
 	cfg      interfaces.Config
@@ -21,6 +23,7 @@ type Server struct {
 	inWorker interfaces.InWorker
 }
 
+//	Server constructor.
 func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users, inWorker interfaces.InWorker) *Server {
 	return &Server{
 		storage:  storage,
@@ -30,6 +33,9 @@ func New(storage interfaces.Storage, config interfaces.Config, user interfaces.U
 	}
 }
 
+//	Post request handler.
+//	Adding a link to an abbreviation.
+//	We get an abbreviated link.
 func (s Server) PostURL(c echo.Context) error {
 	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
@@ -55,6 +61,8 @@ func (s Server) PostURL(c echo.Context) error {
 	return c.String(http.StatusCreated, ShortURL)
 }
 
+//	GET request handler.
+//	We get original link.
 func (s Server) GetURL(c echo.Context) error {
 	if c.Param("id") == "" {
 		return c.NoContent(http.StatusBadRequest)
@@ -74,6 +82,10 @@ func (s Server) GetURL(c echo.Context) error {
 	return c.NoContent(http.StatusTemporaryRedirect)
 }
 
+//	Post request handler.
+//	Adding a link to an abbreviation.
+//	Passing the link in the form of json.
+//	We get an abbreviated link.
 func (s Server) PostJSON(c echo.Context) error {
 	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
@@ -106,6 +118,7 @@ func (s Server) PostJSON(c echo.Context) error {
 	return c.JSON(http.StatusCreated, response)
 }
 
+// Auxiliary link shortening functionю
 func (s Server) shortenURL(userID, URL string) (string, error) {
 	_, err := url.ParseRequestURI(URL)
 	if err != nil {
@@ -126,6 +139,7 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	return shortURL, nil
 }
 
+//	Ping handler.
 func (s Server) GetPing(c echo.Context) error {
 	if err := s.storage.Ping(); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
@@ -133,6 +147,8 @@ func (s Server) GetPing(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+//	Get request handler.
+//	Getting all the user's links.
 func (s Server) GetURLsByUserID(c echo.Context) error {
 
 	cookie, err := c.Request().Cookie("cookie")
@@ -142,8 +158,7 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 
 	userID, _ := s.user.ReadSessionID(cookie.Value)
 
-	var URLs []interfaces.ModelURL
-	URLs, err = s.storage.GetAllURLsByUserID(userID)
+	URLs, err := s.storage.GetAllURLsByUserID(userID)
 	if err != nil {
 		return c.NoContent(http.StatusNoContent)
 	}
@@ -159,14 +174,18 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 	return c.JSON(http.StatusOK, URLArray)
 }
 
+//	Post request handler.
+//	Adding a links to an abbreviation.
+//	Passing the link in the form array  of json.
+//	We get an array of abbreviated link.
 func (s Server) PostBatch(c echo.Context) error {
 	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	userID, _ := s.user.ReadSessionID(cookie.Value)
-	var batchReq []interfaces.BatchRequest
-	var batchArr []interfaces.BatchResponse
+	batchReq := make([]interfaces.BatchRequest, 1000)
+	batchArr := make([]interfaces.BatchResponse, 1000)
 	err = json.NewDecoder(c.Request().Body).Decode(&batchReq)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
@@ -188,6 +207,8 @@ func (s Server) PostBatch(c echo.Context) error {
 	return c.JSON(http.StatusCreated, batchArr)
 }
 
+//	DELETE request handler.
+//	delete user links.
 func (s Server) DelURLsBATCH(c echo.Context) error {
 	cookie, err := c.Request().Cookie("cookie")
 	if err != nil {
@@ -201,14 +222,14 @@ func (s Server) DelURLsBATCH(c echo.Context) error {
 	if err != nil || len(body) == 0 {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	deleteURLs := make([]string, 0)
+	deleteURLs := make([]string, 1000)
 	err = json.Unmarshal(body, &deleteURLs)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	for _, url := range deleteURLs {
-		model.ShortURL = url
+	for _, deleteURL := range deleteURLs {
+		model.ShortURL = deleteURL
 		s.inWorker.Do(model)
 	}
 

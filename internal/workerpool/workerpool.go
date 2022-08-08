@@ -1,3 +1,4 @@
+//	Package for creating a queue for deleting links.
 package workerpool
 
 import (

@@ -1,3 +1,4 @@
+//	Package for receiving data compression/decompression cookies.
 package middleware
 
 import (
