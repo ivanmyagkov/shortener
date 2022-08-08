@@ -184,7 +184,7 @@ func (s Server) PostBatch(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	userID, _ := s.user.ReadSessionID(cookie.Value)
-	batchReq := make([]interfaces.BatchRequest, 1000)
+	var batchReq []interfaces.BatchRequest
 	batchArr := make([]interfaces.BatchResponse, 1000)
 	err = json.NewDecoder(c.Request().Body).Decode(&batchReq)
 	if err != nil {
