@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Shortener
+  description: API for shortening links in the OpenAPI 3.0 specification
+  contact:
+    name: Ivan Myagkov
+    email: lokomotiv95@yandex.ru
+  license:
+    name: My license
+  version: 1.0.0
+servers:
+  - url: https://shortner.ru
+paths:
+  /:
+    post:
+      security:
+        - cookieAuth: [ ]
+      summary: A URL string in the request body for shortening
+      operationId: PostURL
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "www.yandex.ru"
+      responses:
+        '201':
+          description: URL shortened and saved
+        '400':
+          description: Invalid request format
+        '409':
+          description: Link already exists
+        '500':
+          description: Server error
+  /{id}:
+    get:
+      security:
+        - cookieAuth: [ ]
+      summary: Accepts the identifier of the short URL as a URL parameter
+      operationId: GetURL
+      parameters:
+        - name: id
+          in: path
+          description: Short URL ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '307':
+          description: Redirect. The original URL in the HTTP Location header
+          headers:
+            Location:
+              schema:
+                type: string
+                description: The original URL
+        '400':
+          description: Invalid request format
+        '410':
+          description: URL was deleted
+        '500':
+          description: Server error
+  /api/shorten:
+    post:
+      security:
+        - cookieAuth: [ ]
+      summary: Accepting a JSON object in the request body and returning a JSON object in response
+      operationId: PostJSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+            description: URL shortened and saved
+            content:
+              application/json:
+               schema:
+                type: object
+        '400':
+          description: Invalid request format
+        '409':
+          description: URL was crated
+        '500':
+          description: Server error
+  /api/user/urls:
+    get:
+      security:
+        - cookieAuth: [ ]
+      summary: Return to the user's URLs
+      operationId: GetURLsByUserID
+      responses:
+        '201':
+          description: user's URLs array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelURL'
+        '204':
+          description: Array is empty
+        '400':
+          description: Invalid request format
+    delete:
+      security:
+        - cookieAuth: [ ]
+      summary: Accepts a list of abbreviated URL IDs to delete
+      operationId: DelURLsBATCH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '202':
+          description: Deletion successful
+        '400':
+          description: Invalid request format
+  /api/shorten/batch:
+    post:
+      security:
+        - cookieAuth: [ ]
+      summary: Accepting in the request body a set of URLs for shortening in the format
+      operationId: PostURLsBATCH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModelRequestURL'
+      responses:
+        '201':
+          description: URL shortened and saved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelResponseURL'
+        '400':
+          description: Invalid request format
+  /ping:
+    get:
+      summary: Checks the connection to the database
+      operationId: GetPing
+      responses:
+        '200':
+          description: Сonnection successful
+        '500':
+          description: Сonnection failed
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: cookie
+  schemas:
+    ModelResponseURL:
+      type: object
+      required:
+        -  correlation_id
+        -  short_url
+      properties:
+        correlation_id:
+          type: string
+        short_url:
+          type: string
+    ModelRequestURL:
+      type: object
+      required:
+        -  correlation_id
+        -  original_url
+      properties:
+       correlation_id:
+        type: string
+       original_url:
+        type: string
+    ModelURL:
+      type: object
+      required:
+        - short_url
+        - original_url
+      properties:
+        short_url:
+          type: string
+        original_url:
+          type: string
