@@ -1,4 +1,4 @@
-//	Package for receiving data compression/decompression cookies.
+//	Package middleware for receiving data compression/decompression cookies.
 package middleware
 
 import (
@@ -19,6 +19,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
+//	CompressHandle - data compression function
 func CompressHandle(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if !strings.Contains(c.Request().Header.Get("Accept-Encoding"), "gzip") {
@@ -35,6 +36,7 @@ func CompressHandle(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+//	Decompress - data decompression function
 func Decompress(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if !strings.Contains(c.Request().Header.Get("Content-Encoding"), "gzip") {

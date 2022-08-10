@@ -1,4 +1,4 @@
-//	Server's handlers
+//	Package handlers - Server's handlers
 package handlers
 
 import (
@@ -24,6 +24,7 @@ type Server struct {
 }
 
 //	Server constructor.
+//	New is function to set server settings.
 func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users, inWorker interfaces.InWorker) *Server {
 	return &Server{
 		storage:  storage,
@@ -33,7 +34,7 @@ func New(storage interfaces.Storage, config interfaces.Config, user interfaces.U
 	}
 }
 
-//	Post request handler.
+//	PostURL - Post request handler.
 //	Adding a link to an abbreviation.
 //	We get an abbreviated link.
 func (s Server) PostURL(c echo.Context) error {
@@ -61,7 +62,7 @@ func (s Server) PostURL(c echo.Context) error {
 	return c.String(http.StatusCreated, ShortURL)
 }
 
-//	GET request handler.
+//	GetURL - GET request handler.
 //	We get original link.
 func (s Server) GetURL(c echo.Context) error {
 	if c.Param("id") == "" {
@@ -82,7 +83,7 @@ func (s Server) GetURL(c echo.Context) error {
 	return c.NoContent(http.StatusTemporaryRedirect)
 }
 
-//	Post request handler.
+//	PostJSON - Post request handler.
 //	Adding a link to an abbreviation.
 //	Passing the link in the form of json.
 //	We get an abbreviated link.
@@ -118,7 +119,7 @@ func (s Server) PostJSON(c echo.Context) error {
 	return c.JSON(http.StatusCreated, response)
 }
 
-// Auxiliary link shortening functionю
+// shortenURL - Auxiliary link shortening functionю
 func (s Server) shortenURL(userID, URL string) (string, error) {
 	_, err := url.ParseRequestURI(URL)
 	if err != nil {
@@ -139,7 +140,7 @@ func (s Server) shortenURL(userID, URL string) (string, error) {
 	return shortURL, nil
 }
 
-//	Ping handler.
+//	GetPing - Ping database handler.
 func (s Server) GetPing(c echo.Context) error {
 	if err := s.storage.Ping(); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
@@ -147,7 +148,7 @@ func (s Server) GetPing(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-//	Get request handler.
+//	GetURLsByUserID - Get request handler.
 //	Getting all the user's links.
 func (s Server) GetURLsByUserID(c echo.Context) error {
 
@@ -174,7 +175,7 @@ func (s Server) GetURLsByUserID(c echo.Context) error {
 	return c.JSON(http.StatusOK, URLArray)
 }
 
-//	Post request handler.
+//	PostBatch - Post request handler.
 //	Adding a links to an abbreviation.
 //	Passing the link in the form array  of json.
 //	We get an array of abbreviated link.
@@ -207,7 +208,7 @@ func (s Server) PostBatch(c echo.Context) error {
 	return c.JSON(http.StatusCreated, batchArr)
 }
 
-//	DELETE request handler.
+//	DelURLsBATCH - DELETE request handler.
 //	delete user links.
 func (s Server) DelURLsBATCH(c echo.Context) error {
 	cookie, err := c.Request().Cookie("cookie")

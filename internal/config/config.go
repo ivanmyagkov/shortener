@@ -17,29 +17,29 @@ type Config struct {
 const Secret = "vfktymrjqtkjxrt[jkjlyjpb"
 
 //	Getters
-//	Function get server address.
+//	SrvAddr is function to get server address.
 func (c Config) SrvAddr() string {
 	return c.ServerAddress
 }
 
-//	Function get server hostname.
+//	HostName is function to get server hostname.
 func (c Config) HostName() string {
 	return c.BaseURL
 }
 
-//	Function get file path.
+//	FilePath function to get file path.
 func (c Config) FilePath() string {
 	return c.FileStoragePath
 }
 
-//	Function get database address.
+//	Database function to get database address.
 func (c Config) Database() string {
 	return c.DatabasePath
 }
 
 //	Config constructor
 //
-//	Setting Application Settings values.
+//	NewConfig is function to set Application Settings values.
 func NewConfig(srvAddr, hostName string, filePath string, database string) *Config {
 	return &Config{
 		ServerAddress:   srvAddr,

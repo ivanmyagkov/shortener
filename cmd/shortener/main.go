@@ -1,4 +1,4 @@
-//	The main package is the launch point of the link shortening application.
+// Package main is the launch point of the link shortening application.
 package main
 
 import (
@@ -33,7 +33,7 @@ var flags struct {
 	d string
 }
 
-//	Structure of env variables.
+//	envVar structure is struct of env variables.
 var envVar struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
@@ -41,7 +41,7 @@ var envVar struct {
 	Database        string `env:"DATABASE_DSN"`
 }
 
-//	Initializing startup parameters.
+//	init Initializing startup parameters.
 func init() {
 	err := env.Parse(&envVar)
 	if err != nil {
@@ -54,7 +54,7 @@ func init() {
 	flag.Parse()
 }
 
-//	Entry point
+//	main is entry point
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	signalChan := make(chan os.Signal, 1)

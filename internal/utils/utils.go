@@ -1,4 +1,4 @@
-//	Package of auxiliary functions.
+//	Package utils of auxiliary functions.
 package utils
 
 import (
@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-//	Generating a shortened link.
+//	MD5 Generating a shortened link.
 func MD5(url []byte) string {
 	h := md5.Sum(url)
 	return fmt.Sprintf("%x", h[:8])
@@ -19,7 +19,7 @@ func NewURL(host string, url string) string {
 	return host + "/" + url
 }
 
-//	Creating user ID.
+//	CreateID Creating user ID.
 func CreateID(size int) string {
 	b := make([]byte, size)
 	_, err := rand.Read(b)

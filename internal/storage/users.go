@@ -26,7 +26,7 @@ func New() *DBUsers {
 	}
 }
 
-//	Creating a session id for cookies.
+//	CreateSissionID Creating a session id for cookies.
 func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
 	// Generate SessionID
 	MU.randNum = uid
@@ -50,7 +50,7 @@ func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
 
 }
 
-//	Reading the user ID.
+//	ReadSessionID Reading the user ID.
 func (MU *DBUsers) ReadSessionID(id string) (string, error) {
 	key := []byte(config.Secret)
 	dst, err := hex.DecodeString(id)

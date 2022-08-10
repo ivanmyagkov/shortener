@@ -12,7 +12,7 @@ type DB struct {
 	ShortURL map[string][]interfaces.ModelURL
 }
 
-//	Creation string map storage.
+//	NewDBConn is function to create string map storage.
 func NewDBConn() *DB {
 	return &DB{
 		Storage:  make(map[string]string),
@@ -20,7 +20,7 @@ func NewDBConn() *DB {
 	}
 }
 
-//	Get original URL from map.
+//	GetURL Get original URL from map.
 func (db *DB) GetURL(shortURL string) (string, error) {
 	db.Lock()
 	defer db.Unlock()
@@ -30,7 +30,7 @@ func (db *DB) GetURL(shortURL string) (string, error) {
 	return "", interfaces.ErrNotFound
 }
 
-//	Get all user URLs from map.
+//	GetAllURLsByUserID Get all user URLs from map.
 func (db *DB) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
 	var ok bool
 	if _, ok = db.ShortURL[userID]; ok {
@@ -43,7 +43,7 @@ func (db *DB) DelBatchShortURLs(tasks []interfaces.Task) error {
 	return nil
 }
 
-//	Add new URL in map.
+//	SetShortURL Add new URL in map.
 func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 	db.Lock()
 	defer db.Unlock()
