@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	_ "net/http/pprof"
 	"os"
@@ -25,6 +26,13 @@ import (
 	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
 
+//build and compile flags
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 //	Structure of flags.
 var flags struct {
 	a string
@@ -43,6 +51,26 @@ var envVar struct {
 
 //	init Initializing startup parameters.
 func init() {
+	// Build parameters
+	switch buildVersion {
+	case "":
+		fmt.Printf("Build version: %s\n", "N/A")
+	default:
+		fmt.Printf("Build version: %s\n", buildVersion)
+	}
+	switch buildDate {
+	case "":
+		fmt.Printf("Build date: %s\n", "N/A")
+	default:
+		fmt.Printf("Build date: %s\n", buildDate)
+	}
+	switch buildCommit {
+	case "":
+		fmt.Printf("Build commit: %s\n", "N/A")
+	default:
+		fmt.Printf("Build commit: %s\n", buildCommit)
+	}
+
 	err := env.Parse(&envVar)
 	if err != nil {
 		log.Fatal(err)
