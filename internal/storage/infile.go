@@ -1,3 +1,4 @@
+//	Package for save URLs
 package storage
 
 import (
@@ -24,6 +25,7 @@ type ModelFile struct {
 	BaseURL  string `json:"base_url"`
 }
 
+//	NewInFile Creating a file to save URLs and getting existing ones.
 func NewInFile(fileName string) (interfaces.Storage, error) {
 	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
@@ -64,6 +66,7 @@ func (s *InFile) Close() error {
 
 }
 
+//	GetURL Get original URL from file.
 func (s *InFile) GetURL(key string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -74,6 +77,7 @@ func (s *InFile) GetURL(key string) (string, error) {
 	return "", interfaces.ErrNotFound
 }
 
+//	GetAllURLsByUserID Get all user URLs from file.
 func (s *InFile) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
 	if _, ok := s.cache[userID]; ok {
 		return s.cache[userID], nil
@@ -85,6 +89,8 @@ func (s *InFile) DelBatchShortURLs(tasks []interfaces.Task) error {
 
 	return nil
 }
+
+//	SetShortURL Add new URL in file.
 func (s *InFile) SetShortURL(userID, key, value string) error {
 	s.Lock()
 	defer s.Unlock()

@@ -1,3 +1,4 @@
+//	Package middleware for receiving data compression/decompression cookies.
 package middleware
 
 import (
@@ -13,12 +14,14 @@ type MW struct {
 	users interfaces.Users
 }
 
+//	New is function to Create a user.
 func New(users interfaces.Users) *MW {
 	return &MW{
 		users: users,
 	}
 }
 
+//	SessionWithCookies - Intermediate function for validating and creating cookies.
 func (M *MW) SessionWithCookies(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("cookie")

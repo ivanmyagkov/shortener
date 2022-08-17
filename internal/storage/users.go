@@ -19,7 +19,6 @@ type ModelUser struct {
 }
 
 func New() *DBUsers {
-	//key := utils.CreateID(16)
 	return &DBUsers{
 		storageUsers: map[string]ModelUser{},
 		randNum:      "",
@@ -27,17 +26,18 @@ func New() *DBUsers {
 	}
 }
 
+//	CreateSissionID Creating a session id for cookies.
 func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
-	//generate SessionID
+	// Generate SessionID
 	MU.randNum = uid
 	src, err := hex.DecodeString(MU.randNum)
 	if err != nil {
 		return "", err
 	}
-	//read secret key
+	// Read secret key
 	key := []byte(config.Secret)
 
-	//sign the session whis a secret key
+	// Sign the session with a secret key
 	aesblock, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -49,6 +49,8 @@ func (MU *DBUsers) CreateSissionID(uid string) (string, error) {
 	return cookie, nil
 
 }
+
+//	ReadSessionID Reading the user ID.
 func (MU *DBUsers) ReadSessionID(id string) (string, error) {
 	key := []byte(config.Secret)
 	dst, err := hex.DecodeString(id)
@@ -59,7 +61,7 @@ func (MU *DBUsers) ReadSessionID(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//decryption session id by secret key
+	// Decryption session id by secret key
 	src := make([]byte, 16)
 	aesblock.Decrypt(src, dst)
 	return hex.EncodeToString(src), nil

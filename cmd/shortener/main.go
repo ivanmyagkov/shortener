@@ -1,19 +1,21 @@
+// Package main is the launch point of the link shortening application.
 package main
 
 import (
 	"context"
 	"flag"
 	"log"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 
+	"github.com/caarlos0/env/v6"
+	"github.com/labstack/echo-contrib/pprof"
+	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/caarlos0/env/v6"
-	"github.com/labstack/echo/v4"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
 	"github.com/ivanmyagkov/shortener.git/internal/handlers"
@@ -23,6 +25,7 @@ import (
 	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
 
+//	Structure of flags.
 var flags struct {
 	a string
 	b string
@@ -30,6 +33,7 @@ var flags struct {
 	d string
 }
 
+//	envVar structure is struct of env variables.
 var envVar struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
@@ -37,6 +41,7 @@ var envVar struct {
 	Database        string `env:"DATABASE_DSN"`
 }
 
+//	init Initializing startup parameters.
 func init() {
 	err := env.Parse(&envVar)
 	if err != nil {
@@ -49,6 +54,7 @@ func init() {
 	flag.Parse()
 }
 
+//	main is entry point
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	signalChan := make(chan os.Signal, 1)
@@ -71,7 +77,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// Init Workers
+	//	Init Workers
 	g, _ := errgroup.WithContext(ctx)
 	recordCh := make(chan interfaces.Task, 50)
 	doneCh := make(chan struct{})
@@ -89,10 +95,10 @@ func main() {
 	srv := handlers.New(db, cfg, usr, inWorker)
 
 	e := echo.New()
+	pprof.Register(e)
 	e.Use(middleware.CompressHandle)
 	e.Use(middleware.Decompress)
 	e.Use(mw.SessionWithCookies)
-
 	e.GET("/:id", srv.GetURL)
 	e.GET("/api/user/urls", srv.GetURLsByUserID)
 	e.GET("/ping", srv.GetPing)

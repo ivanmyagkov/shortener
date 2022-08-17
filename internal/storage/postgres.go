@@ -17,6 +17,7 @@ type Storage struct {
 	db *sql.DB
 }
 
+//	NewDB is function to create DB connection.
 func NewDB(psqlConn string) (*Storage, error) {
 	db, err := sql.Open("postgres", psqlConn)
 	if err != nil {
@@ -35,6 +36,7 @@ func NewDB(psqlConn string) (*Storage, error) {
 	}, nil
 }
 
+//	GetURL Get original URL from DB.
 func (D *Storage) GetURL(shortURL string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -69,8 +71,9 @@ func (D *Storage) GetURL(shortURL string) (string, error) {
 	return baseURL, nil
 }
 
+//	GetAllURLsByUserID Get all user URLs from DB.
 func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, error) {
-	var modelURL []interfaces.ModelURL
+	modelURL := make([]interfaces.ModelURL, 1000)
 	var model interfaces.ModelURL
 	rows, err := D.db.Query("SELECT short_url, base_url FROM users_url RIGHT JOIN urls u on users_url.url_id=u.id WHERE user_id=$1 and is_deleted=$2;", userID, false)
 	if err != nil {
@@ -91,6 +94,7 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 	return modelURL, nil
 }
 
+//	DelBatchShortURLs Delete user URLs from DB.
 func (D *Storage) DelBatchShortURLs(tasks []interfaces.Task) error {
 
 	query := `UPDATE users_url SET is_deleted = true from (SELECT id FROM urls RIGHT JOIN users_url uu on urls.id = uu.url_id WHERE user_id=$1 and short_url=$2) as urls`
@@ -100,9 +104,10 @@ func (D *Storage) DelBatchShortURLs(tasks []interfaces.Task) error {
 			return err
 		}
 	}
-
 	return nil
 }
+
+//	SetShortURL Add new URL in DB.
 func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 	var urlID int
 	query := `INSERT INTO urls (base_url, short_url) VALUES ($1, $2) RETURNING id `
@@ -152,6 +157,7 @@ func (D *Storage) SetShortURL(userID, shortURL, baseURL string) error {
 	return nil
 }
 
+//	Ping is function to Ping DB connection.
 func (D *Storage) Ping() error {
 	return D.db.Ping()
 }
