@@ -11,6 +11,7 @@ type Config struct {
 	FileStoragePath string
 	// database path
 	DatabasePath string
+	EnableHTTPS  bool
 }
 
 //	Secret word for creating a session id
@@ -37,11 +38,12 @@ func (c Config) Database() string {
 }
 
 //	NewConfig is function to set Application Settings values.
-func NewConfig(srvAddr, hostName string, filePath string, database string) *Config {
+func NewConfig(srvAddr, hostName string, filePath string, database string, ssl bool) *Config {
 	return &Config{
 		ServerAddress:   srvAddr,
 		BaseURL:         hostName,
 		FileStoragePath: filePath,
 		DatabasePath:    database,
+		EnableHTTPS:     ssl,
 	}
 }

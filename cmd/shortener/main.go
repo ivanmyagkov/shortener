@@ -3,9 +3,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -26,19 +28,13 @@ import (
 	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
 
-//build and compile flags
-var (
-	buildVersion string
-	buildDate    string
-	buildCommit  string
-)
-
 //	Structure of flags.
 var flags struct {
 	a string
 	b string
 	f string
 	d string
+	s bool
 }
 
 //	envVar structure is struct of env variables.
@@ -47,10 +43,17 @@ var envVar struct {
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Database        string `env:"DATABASE_DSN"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
 }
 
-//	init Initializing startup parameters.
-func init() {
+//build and compile flags
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
+func buildParams() {
 	// Build parameters
 	switch buildVersion {
 	case "":
@@ -70,7 +73,11 @@ func init() {
 	default:
 		fmt.Printf("Build commit: %s\n", buildCommit)
 	}
+}
 
+//	init Initializing startup parameters.
+func init() {
+	buildParams()
 	err := env.Parse(&envVar)
 	if err != nil {
 		log.Fatal(err)
@@ -79,6 +86,7 @@ func init() {
 	flag.StringVar(&flags.b, "b", envVar.BaseURL, "base url")
 	flag.StringVar(&flags.f, "f", envVar.FileStoragePath, "file storage path")
 	flag.StringVar(&flags.d, "d", envVar.Database, "database path")
+	flag.BoolVar(&flags.s, "s", envVar.EnableHTTPS, "enable ssl")
 	flag.Parse()
 }
 
@@ -89,7 +97,7 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT)
 	var db interfaces.Storage
 
-	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d)
+	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d, flags.s)
 	var err error
 	if cfg.FilePath() != "" {
 		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
@@ -134,7 +142,14 @@ func main() {
 	e.POST("/api/shorten", srv.PostJSON)
 	e.POST("/api/shorten/batch", srv.PostBatch)
 	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
-
+	s := http.Server{
+		Addr:      cfg.SrvAddr(),
+		Handler:   e, // set Echo as handler
+		TLSConfig: &tls.Config{
+			//MinVersion: 1, // customize TLS configuration
+		},
+		//ReadTimeout: 30 * time.Second, // use custom timeouts
+	}
 	go func() {
 
 		<-signalChan
@@ -142,8 +157,14 @@ func main() {
 		log.Println("Shutting down...")
 
 		cancel()
-		if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
-			e.Logger.Fatal(err)
+		if cfg.EnableHTTPS {
+			if err = s.Shutdown(ctx); err != nil && err != ctx.Err() {
+				e.Logger.Fatal(err)
+			}
+		} else {
+			if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
+				e.Logger.Fatal(err)
+			}
 		}
 
 		if err = db.Close(); err != nil {
@@ -159,8 +180,14 @@ func main() {
 
 	}()
 
-	if err := e.Start(cfg.SrvAddr()); err != nil {
-		e.Logger.Fatal(err)
+	if !cfg.EnableHTTPS {
+		if err := e.Start(cfg.SrvAddr()); err != nil {
+			e.Logger.Fatal(err)
+		}
+	} else {
+		if err := s.ListenAndServeTLS("cmd/shortener/host.crt", "cmd/shortener/host.key"); err != http.ErrServerClosed {
+			e.Logger.Fatal(err)
+		}
 	}
 
 }
