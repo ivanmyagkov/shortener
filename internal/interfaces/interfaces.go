@@ -1,3 +1,4 @@
+//	Package interfaces for storing interfaces
 package interfaces
 
 import "errors"

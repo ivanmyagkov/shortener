@@ -43,7 +43,7 @@ func TestGetUrl(t *testing.T) {
 			args: args{
 				db:       storage.NewDBConn(),
 				usr:      storage.New(),
-				cfg:      config.NewConfig(":8080", "http://localhost:8080/", "", ""),
+				cfg:      config.NewConfig(":8080", "http://localhost:8080/", "", "", false),
 				URL:      "https://www.yandex.ru",
 				shortURL: "http://localhost:8080/f845599b09851789",
 				cookie:   "a07a35a622236b60753719fbc9a9ff0c",
@@ -56,7 +56,7 @@ func TestGetUrl(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080/", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080/", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			value: "f845599b09851789",
@@ -67,7 +67,7 @@ func TestGetUrl(t *testing.T) {
 			args: args{
 				db:       storage.NewDBConn(),
 				usr:      storage.New(),
-				cfg:      config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:      config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				URL:      "https://www.yandex.ru",
 				shortURL: "f845599b09851789",
 				cookie:   "a07a35a622236b60753719fbc9a9ff0c",
@@ -128,7 +128,7 @@ func TestPostUrl(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 500, body: ""},
@@ -139,7 +139,7 @@ func TestPostUrl(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
@@ -199,7 +199,7 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 400, body: ""},
@@ -210,7 +210,7 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 500, body: ""},
@@ -221,7 +221,7 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
@@ -289,7 +289,7 @@ func TestServer_GetURLsByUserID(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", ""),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 204},

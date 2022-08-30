@@ -8,21 +8,21 @@ import (
 )
 
 type DBUsers struct {
-	storageUsers map[string]ModelUser
-	randNum      string
-	CookieWord   string
+	//storageUsers map[string]ModelUser
+	randNum    string
+	CookieWord string
 }
 
-type ModelUser struct {
-	userID string
-	cookie string
-}
+//type ModelUser struct {
+//	userID string
+//	cookie string
+//}
 
 func New() *DBUsers {
 	return &DBUsers{
-		storageUsers: map[string]ModelUser{},
-		randNum:      "",
-		CookieWord:   "cookie",
+		//	storageUsers: map[string]ModelUser{},
+		randNum:    "",
+		CookieWord: "cookie",
 	}
 }
 

@@ -23,7 +23,6 @@ type Server struct {
 	inWorker interfaces.InWorker
 }
 
-//	Server constructor.
 //	New is function to set server settings.
 func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users, inWorker interfaces.InWorker) *Server {
 	return &Server{
