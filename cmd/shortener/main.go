@@ -30,20 +30,22 @@ import (
 
 //	Structure of flags.
 var flags struct {
-	a string
-	b string
-	f string
-	d string
-	s bool
+	A string `json:"server_address"`
+	B string `json:"base_url"`
+	F string `json:"file_storage_path"`
+	D string `json:"database_dns"`
+	S bool   `json:"enable_https"`
+	C string `json:"-"`
 }
 
 //	envVar structure is struct of env variables.
 var envVar struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	Database        string `env:"DATABASE_DSN"`
-	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080" json:"base_url"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
+	Database        string `env:"DATABASE_DSN" json:"database_dns"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS" json:"enable_https"`
+	Config          string `env:"CONFIG" json:"-"`
 }
 
 //build and compile flags
@@ -82,12 +84,15 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	flag.StringVar(&flags.a, "a", envVar.ServerAddress, "server address")
-	flag.StringVar(&flags.b, "b", envVar.BaseURL, "base url")
-	flag.StringVar(&flags.f, "f", envVar.FileStoragePath, "file storage path")
-	flag.StringVar(&flags.d, "d", envVar.Database, "database path")
-	flag.BoolVar(&flags.s, "s", envVar.EnableHTTPS, "enable ssl")
+	flag.StringVar(&flags.A, "a", envVar.ServerAddress, "server address")
+	flag.StringVar(&flags.B, "b", envVar.BaseURL, "base url")
+	flag.StringVar(&flags.F, "f", envVar.FileStoragePath, "file storage path")
+	flag.StringVar(&flags.D, "d", envVar.Database, "database path")
+	flag.BoolVar(&flags.S, "s", envVar.EnableHTTPS, "enable ssl")
+	flag.StringVar(&flags.C, "config", envVar.Config, "config file")
+	flag.StringVar(&flags.C, "c", envVar.Config, "config file")
 	flag.Parse()
+	config.ParseConfig(flags.C, &flags)
 }
 
 //	main is entry point
@@ -97,7 +102,7 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT)
 	var db interfaces.Storage
 
-	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d, flags.s)
+	cfg := config.NewConfig(flags.A, flags.B, flags.F, flags.D, flags.S)
 	var err error
 	if cfg.FilePath() != "" {
 		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
@@ -145,21 +150,18 @@ func main() {
 	s := http.Server{
 		Addr:      cfg.SrvAddr(),
 		Handler:   e, // set Echo as handler
-		TLSConfig: &tls.Config{
-			//MinVersion: 1, // customize TLS configuration
-		},
-		//ReadTimeout: 30 * time.Second, // use custom timeouts
+		TLSConfig: &tls.Config{},
 	}
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 
 		<-signalChan
 
 		log.Println("Shutting down...")
 
-		cancel()
 		if cfg.EnableHTTPS {
 			if err = s.Shutdown(ctx); err != nil && err != ctx.Err() {
-				e.Logger.Fatal(err)
+				s.ErrorLog.Fatal(ctx)
 			}
 		} else {
 			if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
@@ -171,22 +173,23 @@ func main() {
 			log.Fatal(err)
 		}
 
-		close(recordCh)
-		close(doneCh)
 		err = g.Wait()
 		if err != nil {
 			log.Println(err)
 		}
+		cancel()
+		close(recordCh)
+		close(doneCh)
 
 	}()
 
 	if !cfg.EnableHTTPS {
-		if err := e.Start(cfg.SrvAddr()); err != nil {
+		if err = e.Start(cfg.SrvAddr()); err != nil {
 			e.Logger.Fatal(err)
 		}
 	} else {
-		if err := s.ListenAndServeTLS("cmd/shortener/host.crt", "cmd/shortener/host.key"); err != http.ErrServerClosed {
-			e.Logger.Fatal(err)
+		if err = s.ListenAndServeTLS("cmd/shortener/host.crt", "cmd/shortener/host.key"); err != http.ErrServerClosed {
+			s.ErrorLog.Fatal(err)
 		}
 	}
 
