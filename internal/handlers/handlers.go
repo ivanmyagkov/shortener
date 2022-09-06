@@ -199,7 +199,7 @@ func (s Server) PostBatch(c echo.Context) error {
 			if errors.Is(err, interfaces.ErrAlreadyExists) {
 				return c.NoContent(http.StatusBadRequest)
 			}
-			return err
+			return c.NoContent(http.StatusBadRequest)
 		}
 
 		batchArr = append(batchArr, batchRes)

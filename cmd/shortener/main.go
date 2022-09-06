@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -18,6 +17,7 @@ import (
 	"github.com/labstack/echo-contrib/pprof"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
@@ -147,10 +147,15 @@ func main() {
 	e.POST("/api/shorten", srv.PostJSON)
 	e.POST("/api/shorten/batch", srv.PostBatch)
 	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
+	m := &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		Cache:      autocert.DirCache("cache-dir"),
+		HostPolicy: autocert.HostWhitelist("mysite.ru"),
+	}
 	s := http.Server{
 		Addr:      cfg.SrvAddr(),
 		Handler:   e, // set Echo as handler
-		TLSConfig: &tls.Config{},
+		TLSConfig: m.TLSConfig(),
 	}
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
@@ -188,7 +193,7 @@ func main() {
 			e.Logger.Fatal(err)
 		}
 	} else {
-		if err = s.ListenAndServeTLS("cmd/shortener/host.crt", "cmd/shortener/host.key"); err != http.ErrServerClosed {
+		if err = s.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
 			s.ErrorLog.Fatal(err)
 		}
 	}
