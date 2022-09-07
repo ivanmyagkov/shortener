@@ -128,63 +128,36 @@ func TestPostUrl(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 500, body: ""},
 		},
 		{
-			name:  "cookie is wrong",
+			name:  "with body",
 			value: "https://www.yandex.ru",
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
-			want: want{code: 400, body: ""},
-		},
-		{
-			name:  "with body",
-			value: "https://www.yandex.ru/1",
-			args: args{
-				db:     storage.NewDBConn(),
-				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-				cookie: "a07a35a622236b60753719fbc9a9ff0c",
-			},
-			want: want{code: 201, body: "http://localhost:8080/34a7a94a3c659110"},
-		},
-		{
-			name:  "conflict",
-			value: "https://www.yandex.ru/1",
-			args: args{
-				db:     storage.NewDBConn(),
-				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-				cookie: "a07a35a622236b60753719fbc9a9ff0c",
-			},
-			want: want{code: 409, body: "http://localhost:8080/34a7a94a3c659110"},
+			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			recordCh := make(chan interfaces.Task, 50)
 			doneCh := make(chan struct{})
-			db, _ := storage.NewDB(tt.args.cfg.DatabasePath)
+
 			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
 			e := echo.New()
-			s := New(db, tt.args.cfg, tt.args.usr, inWorker)
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			cookies := new(http.Cookie)
-			if tt.name == "cookie is wrong" {
-				cookies.Name = "cookiee"
-			} else {
-				cookies.Name = "cookie"
-			}
-
+			cookies.Name = "cookie"
 			cookies.Path = "/"
 			cookies.Value = tt.args.cookie
 			c.SetCookie(cookies)
@@ -198,7 +171,6 @@ func TestPostUrl(t *testing.T) {
 				}
 				require.Equal(t, tt.want.body, string(body))
 			}
-
 		})
 	}
 }
@@ -227,7 +199,7 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 400, body: ""},
@@ -238,21 +210,10 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 500, body: ""},
-		},
-		{
-			name:  "cookie is wrong",
-			value: `{"url" : "https://www.yandex.ru"}`,
-			args: args{
-				db:     storage.NewDBConn(),
-				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-				cookie: "a07a35a622236b60753719fbc9a9ff0c",
-			},
-			want: want{code: 400, body: ""},
 		},
 		{
 			name:  "with body",
@@ -260,47 +221,30 @@ func TestPostJSON(t *testing.T) {
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 201, body: "http://localhost:8080/f845599b09851789"},
 		},
-		{
-			name:  "conflict",
-			value: `{"url" : "https://www.yandex.ru"}`,
-			args: args{
-				db:     storage.NewDBConn(),
-				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-				cookie: "a07a35a622236b60753719fbc9a9ff0c",
-			},
-			want: want{code: http.StatusConflict, body: "http://localhost:8080/f845599b09851789"},
-		},
 	}
 
 	for _, tt := range tests {
-		e := echo.New()
-		recordCh := make(chan interfaces.Task, 50)
-		doneCh := make(chan struct{})
-
-		inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
 		t.Run(tt.name, func(t *testing.T) {
 			var response struct {
 				ShortURL string `json:"result"`
 			}
+			e := echo.New()
+			recordCh := make(chan interfaces.Task, 50)
+			doneCh := make(chan struct{})
 
-			db, _ := storage.NewDB(tt.args.cfg.DatabasePath)
-			s := New(db, tt.args.cfg, tt.args.usr, inWorker)
+			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
+			s := New(tt.args.db, tt.args.cfg, tt.args.usr, inWorker)
 			req := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(tt.value))
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			c := e.NewContext(req, rec)
 			cookies := new(http.Cookie)
-			if tt.name == "cookie is wrong" {
-				cookies.Name = "cookiee"
-			} else {
-				cookies.Name = "cookie"
-			}
+			cookies.Name = "cookie"
 			cookies.Path = "/"
 			cookies.Value = tt.args.cookie
 			c.SetCookie(cookies)
@@ -339,38 +283,16 @@ func TestServer_GetURLsByUserID(t *testing.T) {
 		value string
 		want  want
 	}{
-		//{
-		//	name:  "with body",
-		//	value: "",
-		//	args: args{
-		//		db:     storage.NewDBConn(),
-		//		usr:    storage.New(),
-		//		cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-		//		cookie: "33a578d973226bffb1ecd6ba6b9f179c",
-		//	},
-		//	want: want{code: 200},
-		//},
 		{
 			name:  "body is empty",
 			value: "",
 			args: args{
 				db:     storage.NewDBConn(),
 				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
+				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "", false),
 				cookie: "a07a35a622236b60753719fbc9a9ff0c",
 			},
 			want: want{code: 204},
-		},
-		{
-			name:  "cookie is wrong",
-			value: "",
-			args: args{
-				db:     storage.NewDBConn(),
-				usr:    storage.New(),
-				cfg:    config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-				cookie: "a07a35a622236b60753719fbc9a9ff0c",
-			},
-			want: want{code: 400},
 		},
 	}
 	for _, tt := range tests {
@@ -387,63 +309,13 @@ func TestServer_GetURLsByUserID(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			cookies := new(http.Cookie)
-			if tt.name == "cookie is wrong" {
-				cookies.Name = "cookiee"
-			} else {
-				cookies.Name = "cookie"
-			}
+			cookies.Name = "cookie"
 			cookies.Path = "/"
 			cookies.Value = tt.args.cookie
 			c.SetCookie(cookies)
 			c.Request().AddCookie(cookies)
+
 			h := s.GetURLsByUserID(c)
-			if assert.NoError(t, h) {
-				require.Equal(t, tt.want.code, rec.Code)
-			}
-		})
-	}
-}
-
-func TestServer_GetPing(t *testing.T) {
-	type args struct {
-		db     *storage.DB
-		cfg    *config.Config
-		usr    *storage.DBUsers
-		cookie string
-	}
-	type want struct {
-		code int
-	}
-	tests := []struct {
-		name  string
-		args  args
-		value string
-		want  want
-	}{
-		{
-			name:  "status ok",
-			value: "",
-			args: args{
-				usr: storage.New(),
-				cfg: config.NewConfig(":8080", "http://localhost:8080", "", "postgres://ivanmyagkov@localhost:5432/postgres?sslmode=disable", false),
-			},
-			want: want{code: 200},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := echo.New()
-			recordCh := make(chan interfaces.Task, 50)
-			doneCh := make(chan struct{})
-
-			inWorker := workerpool.NewInputWorker(recordCh, doneCh, context.Background())
-			db, _ := storage.NewDB(tt.args.cfg.DatabasePath)
-			s := New(db, tt.args.cfg, tt.args.usr, inWorker)
-
-			req := httptest.NewRequest(http.MethodGet, "/ping", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-			h := s.GetPing(c)
 			if assert.NoError(t, h) {
 				require.Equal(t, tt.want.code, rec.Code)
 			}
