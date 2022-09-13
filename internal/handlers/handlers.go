@@ -23,7 +23,6 @@ type Server struct {
 	inWorker interfaces.InWorker
 }
 
-//	Server constructor.
 //	New is function to set server settings.
 func New(storage interfaces.Storage, config interfaces.Config, user interfaces.Users, inWorker interfaces.InWorker) *Server {
 	return &Server{
@@ -200,7 +199,7 @@ func (s Server) PostBatch(c echo.Context) error {
 			if errors.Is(err, interfaces.ErrAlreadyExists) {
 				return c.NoContent(http.StatusBadRequest)
 			}
-			return err
+			return c.NoContent(http.StatusBadRequest)
 		}
 
 		batchArr = append(batchArr, batchRes)

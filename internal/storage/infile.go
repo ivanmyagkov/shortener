@@ -1,4 +1,4 @@
-//	Package for save URLs
+//	Package storage for save URLs
 package storage
 
 import (

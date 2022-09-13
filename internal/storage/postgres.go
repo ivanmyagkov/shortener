@@ -90,7 +90,6 @@ func (D *Storage) GetAllURLsByUserID(userID string) ([]interfaces.ModelURL, erro
 		}
 		modelURL = append(modelURL, model)
 	}
-
 	return modelURL, nil
 }
 

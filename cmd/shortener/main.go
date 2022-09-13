@@ -4,7 +4,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -15,6 +17,7 @@ import (
 	"github.com/labstack/echo-contrib/pprof"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
@@ -27,31 +30,69 @@ import (
 
 //	Structure of flags.
 var flags struct {
-	a string
-	b string
-	f string
-	d string
+	A string `json:"server_address"`
+	B string `json:"base_url"`
+	F string `json:"file_storage_path"`
+	D string `json:"database_dns"`
+	S bool   `json:"enable_https"`
+	C string `json:"-"`
 }
 
 //	envVar structure is struct of env variables.
 var envVar struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	Database        string `env:"DATABASE_DSN"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080" json:"base_url"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
+	Database        string `env:"DATABASE_DSN" json:"database_dns"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS" json:"enable_https"`
+	Config          string `env:"CONFIG" json:"-"`
+}
+
+//build and compile flags
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
+func buildParams() {
+	// Build parameters
+	switch buildVersion {
+	case "":
+		fmt.Printf("Build version: %s\n", "N/A")
+	default:
+		fmt.Printf("Build version: %s\n", buildVersion)
+	}
+	switch buildDate {
+	case "":
+		fmt.Printf("Build date: %s\n", "N/A")
+	default:
+		fmt.Printf("Build date: %s\n", buildDate)
+	}
+	switch buildCommit {
+	case "":
+		fmt.Printf("Build commit: %s\n", "N/A")
+	default:
+		fmt.Printf("Build commit: %s\n", buildCommit)
+	}
 }
 
 //	init Initializing startup parameters.
 func init() {
+	buildParams()
 	err := env.Parse(&envVar)
 	if err != nil {
 		log.Fatal(err)
 	}
-	flag.StringVar(&flags.a, "a", envVar.ServerAddress, "server address")
-	flag.StringVar(&flags.b, "b", envVar.BaseURL, "base url")
-	flag.StringVar(&flags.f, "f", envVar.FileStoragePath, "file storage path")
-	flag.StringVar(&flags.d, "d", envVar.Database, "database path")
+	flag.StringVar(&flags.A, "a", envVar.ServerAddress, "server address")
+	flag.StringVar(&flags.B, "b", envVar.BaseURL, "base url")
+	flag.StringVar(&flags.F, "f", envVar.FileStoragePath, "file storage path")
+	flag.StringVar(&flags.D, "d", envVar.Database, "database path")
+	flag.BoolVar(&flags.S, "s", envVar.EnableHTTPS, "enable ssl")
+	flag.StringVar(&flags.C, "config", envVar.Config, "config file")
+	flag.StringVar(&flags.C, "c", envVar.Config, "config file")
 	flag.Parse()
+	config.ParseConfig(flags.C, &flags)
 }
 
 //	main is entry point
@@ -61,7 +102,7 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT)
 	var db interfaces.Storage
 
-	cfg := config.NewConfig(flags.a, flags.b, flags.f, flags.d)
+	cfg := config.NewConfig(flags.A, flags.B, flags.F, flags.D, flags.S)
 	var err error
 	if cfg.FilePath() != "" {
 		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
@@ -106,33 +147,55 @@ func main() {
 	e.POST("/api/shorten", srv.PostJSON)
 	e.POST("/api/shorten/batch", srv.PostBatch)
 	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
-
+	m := &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		Cache:      autocert.DirCache("cache-dir"),
+		HostPolicy: autocert.HostWhitelist("mysite.ru"),
+	}
+	s := http.Server{
+		Addr:      cfg.SrvAddr(),
+		Handler:   e, // set Echo as handler
+		TLSConfig: m.TLSConfig(),
+	}
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 
 		<-signalChan
 
 		log.Println("Shutting down...")
 
-		cancel()
-		if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
-			e.Logger.Fatal(err)
+		if cfg.EnableHTTPS {
+			if err = s.Shutdown(ctx); err != nil && err != ctx.Err() {
+				s.ErrorLog.Fatal(ctx)
+			}
+		} else {
+			if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
+				e.Logger.Fatal(err)
+			}
 		}
 
 		if err = db.Close(); err != nil {
 			log.Fatal(err)
 		}
 
-		close(recordCh)
-		close(doneCh)
 		err = g.Wait()
 		if err != nil {
 			log.Println(err)
 		}
+		cancel()
+		close(recordCh)
+		close(doneCh)
 
 	}()
 
-	if err := e.Start(cfg.SrvAddr()); err != nil {
-		e.Logger.Fatal(err)
+	if !cfg.EnableHTTPS {
+		if err = e.Start(cfg.SrvAddr()); err != nil {
+			e.Logger.Fatal(err)
+		}
+	} else {
+		if err = s.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
+			s.ErrorLog.Fatal(err)
+		}
 	}
 
 }

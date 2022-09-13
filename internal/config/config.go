@@ -1,6 +1,12 @@
 //	Package config - defining and getting application launch settings
 package config
 
+import (
+	"encoding/json"
+	"log"
+	"os"
+)
+
 //	Config struct  - Structure of application settings fields
 type Config struct {
 	// server address
@@ -11,6 +17,10 @@ type Config struct {
 	FileStoragePath string
 	// database path
 	DatabasePath string
+	// use ssl
+	EnableHTTPS bool
+	// config file
+	Config string
 }
 
 //	The secret word for creating a session id
@@ -40,11 +50,26 @@ func (c Config) Database() string {
 //	Config constructor
 //
 //	NewConfig is function to set Application Settings values.
-func NewConfig(srvAddr, hostName string, filePath string, database string) *Config {
+func NewConfig(srvAddr, hostName string, filePath string, database string, ssl bool) *Config {
 	return &Config{
 		ServerAddress:   srvAddr,
 		BaseURL:         hostName,
 		FileStoragePath: filePath,
 		DatabasePath:    database,
+		EnableHTTPS:     ssl,
+	}
+}
+
+func ParseConfig(path string, flags interface{}) {
+	if path != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = json.Unmarshal(data, &flags)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
