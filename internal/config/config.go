@@ -21,10 +21,18 @@ type Config struct {
 	EnableHTTPS bool
 	// config file
 	Config string
+
+	TrustedSubnet string
 }
 
 //	The secret word for creating a session id
 const Secret = "vfktymrjqtkjxrt[jkjlyjpb"
+
+//	Getters
+//	TrustedSubnet is function to get TrustedSubnet.
+func (c Config) GetTrustedSubnet() string {
+	return c.TrustedSubnet
+}
 
 //	Getters
 //	SrvAddr is function to get server address.
@@ -50,13 +58,14 @@ func (c Config) Database() string {
 //	Config constructor
 //
 //	NewConfig is function to set Application Settings values.
-func NewConfig(srvAddr, hostName string, filePath string, database string, ssl bool) *Config {
+func NewConfig(srvAddr, hostName string, filePath string, database string, ssl bool, trustedSubnet string) *Config {
 	return &Config{
 		ServerAddress:   srvAddr,
 		BaseURL:         hostName,
 		FileStoragePath: filePath,
 		DatabasePath:    database,
 		EnableHTTPS:     ssl,
+		TrustedSubnet:   trustedSubnet,
 	}
 }
 

@@ -36,6 +36,7 @@ var flags struct {
 	D string `json:"database_dns"`
 	S bool   `json:"enable_https"`
 	C string `json:"-"`
+	T string `json:"trusted_subnet"`
 }
 
 //	envVar structure is struct of env variables.
@@ -46,6 +47,7 @@ var envVar struct {
 	Database        string `env:"DATABASE_DSN" json:"database_dns"`
 	EnableHTTPS     bool   `env:"ENABLE_HTTPS" json:"enable_https"`
 	Config          string `env:"CONFIG" json:"-"`
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"  envDefault:"192.168.1.0/24" json:"trusted_subnet"`
 }
 
 //build and compile flags
@@ -91,6 +93,7 @@ func init() {
 	flag.BoolVar(&flags.S, "s", envVar.EnableHTTPS, "enable ssl")
 	flag.StringVar(&flags.C, "config", envVar.Config, "config file")
 	flag.StringVar(&flags.C, "c", envVar.Config, "config file")
+	flag.StringVar(&flags.T, "t", envVar.TrustedSubnet, "config file")
 	flag.Parse()
 	config.ParseConfig(flags.C, &flags)
 }
@@ -102,7 +105,7 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT)
 	var db interfaces.Storage
 
-	cfg := config.NewConfig(flags.A, flags.B, flags.F, flags.D, flags.S)
+	cfg := config.NewConfig(flags.A, flags.B, flags.F, flags.D, flags.S, flags.T)
 	var err error
 	if cfg.FilePath() != "" {
 		if db, err = storage.NewInFile(cfg.FilePath()); err != nil {
@@ -147,6 +150,7 @@ func main() {
 	e.POST("/api/shorten", srv.PostJSON)
 	e.POST("/api/shorten/batch", srv.PostBatch)
 	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
+	e.GET("/api/internal/stats", srv.GetStats)
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		Cache:      autocert.DirCache("cache-dir"),

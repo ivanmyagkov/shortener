@@ -117,3 +117,7 @@ func (s *InFile) SetShortURL(userID, key, value string) error {
 func (s *InFile) Ping() error {
 	return nil
 }
+func (s *InFile) GetStats() (interfaces.Stat, error) {
+	var stat interfaces.Stat
+	return stat, nil
+}

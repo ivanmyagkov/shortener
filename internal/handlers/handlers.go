@@ -235,3 +235,21 @@ func (s Server) DelURLsBATCH(c echo.Context) error {
 
 	return c.NoContent(http.StatusAccepted)
 }
+
+func (s Server) GetStats(c echo.Context) error {
+	ip := c.Request().Header.Get("X-Real-IP")
+	err := utils.CheckIP(ip, s.cfg.GetTrustedSubnet())
+	if err != nil {
+		if errors.Is(err, interfaces.ErrNetNotTrusted) {
+			return c.NoContent(http.StatusForbidden)
+		} else {
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	}
+	stat, err := s.storage.GetStats()
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, stat)
+}
