@@ -32,7 +32,7 @@ func (M *MW) UserIDInterceptor(ctx context.Context, req interface{}, info *grpc.
 		if len(values) > 0 {
 			userID, err = M.users.ReadSessionID(values[0])
 			if err == nil {
-				return handler(context.WithValue(ctx, interfaces.UserIDCtxName.String(), userID), req)
+				return handler(context.WithValue(ctx, interfaces.UserIDCtxName, userID), req)
 			}
 		}
 	}
@@ -46,5 +46,5 @@ func (M *MW) UserIDInterceptor(ctx context.Context, req interface{}, info *grpc.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, `set trailer err: `+err.Error())
 	}
-	return handler(context.WithValue(ctx, interfaces.UserIDCtxName.String(), userID), req)
+	return handler(context.WithValue(ctx, interfaces.UserIDCtxName, userID), req)
 }
