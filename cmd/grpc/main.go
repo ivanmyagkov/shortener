@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -14,16 +14,16 @@ import (
 	"syscall"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/labstack/echo-contrib/pprof"
-	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
-	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
 	"github.com/ivanmyagkov/shortener.git/internal/config"
-	"github.com/ivanmyagkov/shortener.git/internal/handlers"
+	grpc2 "github.com/ivanmyagkov/shortener.git/internal/grpc"
+	handlers2 "github.com/ivanmyagkov/shortener.git/internal/grpc/handlers"
+	"github.com/ivanmyagkov/shortener.git/internal/grpc/interceptors"
+	pb "github.com/ivanmyagkov/shortener.git/internal/grpc/proto"
 	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
-	"github.com/ivanmyagkov/shortener.git/internal/middleware"
 	"github.com/ivanmyagkov/shortener.git/internal/storage"
 	"github.com/ivanmyagkov/shortener.git/internal/workerpool"
 )
@@ -135,71 +135,44 @@ func main() {
 	g.Go(inWorker.Loop)
 
 	usr := storage.New()
-	mw := middleware.New(usr)
-	srv := handlers.New(db, cfg, usr, inWorker)
+	mw := interceptors.New(usr)
+	handler := handlers2.NewGRPCHandler(db, cfg, usr, inWorker)
+	server, err := grpc2.NewGRPCServer(handler)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	e := echo.New()
-	pprof.Register(e)
-	e.Use(middleware.CompressHandle)
-	e.Use(middleware.Decompress)
-	e.Use(mw.SessionWithCookies)
-	e.GET("/:id", srv.GetURL)
-	e.GET("/api/user/urls", srv.GetURLsByUserID)
-	e.GET("/ping", srv.GetPing)
-	e.POST("/", srv.PostURL)
-	e.POST("/api/shorten", srv.PostJSON)
-	e.POST("/api/shorten/batch", srv.PostBatch)
-	e.DELETE("/api/user/urls", srv.DelURLsBATCH)
-	e.GET("/api/internal/stats", srv.GetStats)
-	m := &autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		Cache:      autocert.DirCache("cache-dir"),
-		HostPolicy: autocert.HostWhitelist("mysite.ru"),
+	s := grpc.NewServer(grpc.UnaryInterceptor(mw.UserIDInterceptor))
+	// register a service
+	pb.RegisterShortenerServer(s, server)
+	listen, err := net.Listen("tcp", cfg.ServerAddress)
+	if err != nil {
+		log.Fatal(err)
 	}
-	s := http.Server{
-		Addr:      cfg.SrvAddr(),
-		Handler:   e, // set Echo as handler
-		TLSConfig: m.TLSConfig(),
+	log.Print("Server start")
+	if err := s.Serve(listen); err != nil {
+		log.Fatal(err)
 	}
+	// set a listener for os.Signal
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-
 		<-signalChan
 
 		log.Println("Shutting down...")
-
-		if cfg.EnableHTTPS {
-			if err = s.Shutdown(ctx); err != nil && err != ctx.Err() {
-				s.ErrorLog.Fatal(ctx)
-			}
-		} else {
-			if err = e.Shutdown(ctx); err != nil && err != ctx.Err() {
-				e.Logger.Fatal(err)
-			}
-		}
-
+		s.GracefulStop()
 		if err = db.Close(); err != nil {
 			log.Fatal(err)
 		}
 
+		cancel()
+		close(recordCh)
+		close(doneCh)
 		err = g.Wait()
 		if err != nil {
 			log.Println(err)
 		}
-		cancel()
-		close(recordCh)
-		close(doneCh)
-
 	}()
 
-	if !cfg.EnableHTTPS {
-		if err = e.Start(cfg.SrvAddr()); err != nil {
-			e.Logger.Fatal(err)
-		}
-	} else {
-		if err = s.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-			s.ErrorLog.Fatal(err)
-		}
-	}
+	log.Print("Server shutdown")
 
 }

@@ -36,6 +36,22 @@ func NewDB(psqlConn string) (*Storage, error) {
 	}, nil
 }
 
+// GetStats is function to get statistic
+func (D *Storage) GetStats() (interfaces.Stat, error) {
+	var stat interfaces.Stat
+	userQuery := `SELECT count( distinct user_id) from users_url`
+	err := D.db.QueryRow(userQuery).Scan(&stat.Users)
+	if err != nil {
+		return stat, err
+	}
+	URLsQuery := `SELECT count(id) from urls`
+	err = D.db.QueryRow(URLsQuery).Scan(&stat.URLs)
+	if err != nil {
+		return stat, err
+	}
+	return stat, nil
+}
+
 //	GetURL Get original URL from DB.
 func (D *Storage) GetURL(shortURL string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -65,8 +65,11 @@ func (db *DB) SetShortURL(userID, shortURL, URL string) error {
 func (db *DB) Ping() error {
 	return nil
 }
+func (db *DB) GetStats() (interfaces.Stat, error) {
+	var stat interfaces.Stat
+	return stat, nil
+}
 func (db *DB) Close() error {
 	db.ShortURL = nil
 	return nil
-
 }

@@ -10,6 +10,17 @@ var (
 	ErrCreateTable   = errors.New("create tables error")
 	ErrPingDB        = errors.New("ping Db error")
 	ErrWasDeleted    = errors.New("was deleted")
+	ErrNetNotTrusted = errors.New("network is not trusted")
+)
+
+type User string
+
+func (c User) String() string {
+	return string(c)
+}
+
+var (
+	UserIDCtxName User = "UserID"
 )
 
 type Storage interface {
@@ -17,6 +28,7 @@ type Storage interface {
 	GetAllURLsByUserID(userID string) ([]ModelURL, error)
 	SetShortURL(userID, shortURL, baseURL string) error
 	DelBatchShortURLs(tasks []Task) error
+	GetStats() (Stat, error)
 	Ping() error
 	Close() error
 }
@@ -24,6 +36,7 @@ type Storage interface {
 type Config interface {
 	SrvAddr() string
 	HostName() string
+	GetTrustedSubnet() string
 }
 
 type Users interface {
@@ -52,4 +65,9 @@ type BatchRequest struct {
 type BatchResponse struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
+}
+
+type Stat struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
 }

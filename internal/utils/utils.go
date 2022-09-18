@@ -7,6 +7,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net"
+
+	"github.com/ivanmyagkov/shortener.git/internal/interfaces"
 )
 
 //	MD5 Generating a shortened link.
@@ -29,4 +32,25 @@ func CreateID(size int) string {
 
 	id := hex.EncodeToString(b)
 	return id
+}
+
+func CheckIP(ip string, trustedNet string) error {
+	if ip == "" {
+		return interfaces.ErrNetNotTrusted
+	}
+	ipRequest, _, err := net.ParseCIDR(ip)
+	if err != nil {
+		return err
+	}
+	var ipnet *net.IPNet = nil
+	if trustedNet != "" {
+		_, ipnet, err = net.ParseCIDR(trustedNet)
+		if err != nil {
+			return err
+		}
+	}
+	if ipnet.Contains(ipRequest) {
+		return nil
+	}
+	return interfaces.ErrNetNotTrusted
 }
