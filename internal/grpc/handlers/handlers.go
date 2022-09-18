@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/ivanmyagkov/shortener.git/internal/grpc/proto"
@@ -74,12 +73,8 @@ func (h *GRPCHandler) GetURL(request *pb.GetURLRequest) (*pb.GetURLResponse, err
 
 // PostURL method to crerate short URL
 func (h *GRPCHandler) PostURL(ctx context.Context, request *pb.PostURLRequest) (*pb.PostURLResponse, error) {
-
-	token, err := getUserID(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	userID, _ := h.user.ReadSessionID(token)
+	token := ctx.Value(interfaces.UserIDCtxName)
+	userID, _ := h.user.ReadSessionID(token.(string))
 	shortURL, err := h.shortenURL(userID, request.BaseUrl)
 	if err != nil {
 		if errors.Is(err, interfaces.ErrAlreadyExists) {
@@ -99,11 +94,8 @@ func (h *GRPCHandler) PostURL(ctx context.Context, request *pb.PostURLRequest) (
 
 // GetURLsByUserID method to get ULS by user
 func (h *GRPCHandler) GetURLsByUserID(ctx context.Context) (*pb.GetURLsByUserIDResponse, error) {
-	token, err := getUserID(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	userID, _ := h.user.ReadSessionID(token)
+	token := ctx.Value(interfaces.UserIDCtxName)
+	userID, _ := h.user.ReadSessionID(token.(string))
 	URLs, err := h.storage.GetAllURLsByUserID(userID)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -121,15 +113,13 @@ func (h *GRPCHandler) GetURLsByUserID(ctx context.Context) (*pb.GetURLsByUserIDR
 
 // PostURLBatch method to create array shorten URLs
 func (h *GRPCHandler) PostURLBatch(ctx context.Context, request *pb.PostURLBatchRequest) (*pb.PostURLBatchResponse, error) {
-	token, err := getUserID(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	userID, _ := h.user.ReadSessionID(token)
+	token := ctx.Value(interfaces.UserIDCtxName)
+	userID, _ := h.user.ReadSessionID(token.(string))
 	response := pb.PostURLBatchResponse{}
 	for _, requestBatchURL := range request.RequestUrls {
 		var responseBatchURL pb.PostURLBatch
 		responseBatchURL.CorrelationId = requestBatchURL.CorrelationId
+		var err error
 		responseBatchURL.Url, err = h.shortenURL(userID, requestBatchURL.Url)
 		if err != nil {
 			if errors.Is(err, interfaces.ErrAlreadyExists) {
@@ -144,11 +134,8 @@ func (h *GRPCHandler) PostURLBatch(ctx context.Context, request *pb.PostURLBatch
 
 // DeleteURLBatch method to delete array shorten URLs
 func (h *GRPCHandler) DeleteURLBatch(ctx context.Context, request *pb.DeleteURLBatchRequest) (*pb.DeleteURLBatchResponse, error) {
-	token, err := getUserID(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	userID, _ := h.user.ReadSessionID(token)
+	token := ctx.Value(interfaces.UserIDCtxName)
+	userID, _ := h.user.ReadSessionID(token.(string))
 	var model interfaces.Task
 	model.ID = userID
 	for _, deleteURL := range request.RequestUrls.Urls {
@@ -157,20 +144,6 @@ func (h *GRPCHandler) DeleteURLBatch(ctx context.Context, request *pb.DeleteURLB
 	}
 	var response pb.DeleteURLBatchResponse
 	return &response, nil
-}
-
-// getUserID  get userID data
-func getUserID(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", errors.New("not found")
-	}
-	values := md.Get("UserID")
-	if len(values) <= 0 {
-		return "", errors.New("empty array of values was found for user key")
-	}
-	userID := values[0]
-	return userID, nil
 }
 
 // shortenURL - Auxiliary link shortening function
