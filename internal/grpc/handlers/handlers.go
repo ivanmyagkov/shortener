@@ -128,7 +128,7 @@ func (h *GRPCHandler) PostURLBatch(ctx context.Context, request *pb.PostURLBatch
 	userID, _ := h.user.ReadSessionID(token)
 	response := pb.PostURLBatchResponse{}
 	for _, requestBatchURL := range request.RequestUrls {
-		var responseBatchURL *pb.PostURLBatch
+		var responseBatchURL pb.PostURLBatch
 		responseBatchURL.CorrelationId = requestBatchURL.CorrelationId
 		responseBatchURL.Url, err = h.shortenURL(userID, requestBatchURL.Url)
 		if err != nil {
@@ -137,7 +137,7 @@ func (h *GRPCHandler) PostURLBatch(ctx context.Context, request *pb.PostURLBatch
 			}
 			return nil, status.Error(codes.Internal, err.Error())
 		}
-		response.ResponseUrls = append(response.ResponseUrls, responseBatchURL)
+		response.ResponseUrls = append(response.ResponseUrls, &responseBatchURL)
 	}
 	return &response, nil
 }

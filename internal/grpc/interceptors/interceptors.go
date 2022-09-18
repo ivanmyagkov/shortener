@@ -28,11 +28,11 @@ func (M *MW) UserIDInterceptor(ctx context.Context, req interface{}, info *grpc.
 	var token string
 	var err error
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		values := md.Get("UserID")
+		values := md.Get(interfaces.UserIDCtxName.String())
 		if len(values) > 0 {
 			userID, err = M.users.ReadSessionID(values[0])
 			if err == nil {
-				return handler(context.WithValue(ctx, "UserID", userID), req)
+				return handler(context.WithValue(ctx, interfaces.UserIDCtxName.String(), userID), req)
 			}
 		}
 	}
@@ -41,10 +41,10 @@ func (M *MW) UserIDInterceptor(ctx context.Context, req interface{}, info *grpc.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, `create token error: `+err.Error())
 	}
-	md := metadata.New(map[string]string{"UserID": token})
+	md := metadata.New(map[string]string{interfaces.UserIDCtxName.String(): token})
 	err = grpc.SetTrailer(ctx, md)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, `set trailer err: `+err.Error())
 	}
-	return handler(context.WithValue(ctx, "UserID", userID), req)
+	return handler(context.WithValue(ctx, interfaces.UserIDCtxName.String(), userID), req)
 }

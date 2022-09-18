@@ -13,6 +13,16 @@ var (
 	ErrNetNotTrusted = errors.New("network is not trusted")
 )
 
+type User string
+
+func (c User) String() string {
+	return string(c)
+}
+
+var (
+	UserIDCtxName User = "UserID"
+)
+
 type Storage interface {
 	GetURL(shortURL string) (string, error)
 	GetAllURLsByUserID(userID string) ([]ModelURL, error)
